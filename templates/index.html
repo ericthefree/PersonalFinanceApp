@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Checking Summary{% endblock %}
+{% block header %}Checking Account Summary{% endblock %}
+
+{% block body %}
+
+{% if current_balance is not none %}
+    <p class="current-balance">
+        Current Balance: <strong>{{ current_balance | currency }}</strong>
+    </p>
+{% endif %}
+
+{% if transactions %}
+    <div class="table-wrapper">
+        <table class="transactions-table">
+            <thead>
+            <tr>
+                <th class="col-date">Date</th>
+                <th class="col-desc">Description</th>
+                <th class="col-amount">Amount</th>
+                <th class="col-balance">Balance</th>
+                <th class="col-budget" title="Recurring Transaction">R</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for tx in transactions %}
+                <tr class="transaction-row {% if tx.amount < 0 %}tx-negative{% elif tx.amount > 0 %}tx-positive{% endif %}">
+                    <td class="col-date" title="{{ tx.date_display }}">
+                        {{ tx.date_display }}
+                    </td>
+                    <td class="col-desc" title="{{ tx.display_description }}">
+                        {{ tx.display_description }}
+                    </td>
+                    <td class="col-amount" title="{{ tx.amount | currency }}">
+                        {{ tx.amount | currency }}
+                    </td>
+                    <td class="col-balance" title="{{ tx.balance | currency }}">
+                        {{ tx.balance | currency }}
+                    </td>
+                    <td class="col-budget" title="Recurring Transaction">
+                        {% if tx.is_recurring %}B{% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <p class="no-data">
+        No transactions loaded yet. Go to
+        <a href="{{ url_for('manage') }}">Manage</a> to upload or add transactions.
+    </p>
+{% endif %}
+
+{% endblock %}

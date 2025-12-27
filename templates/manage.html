@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Transactions{% endblock %}
+{% block header %}Manage Transactions{% endblock %}
+
+{% block body %}
+
+{% if error %}
+    <div class="error">{{ error }}</div>
+{% endif %}
+
+<!-- Top controls: balance + upload on the same line -->
+<div class="top-controls">
+    <!-- Current Balance form -->
+    <form class="balance-form" method="post">
+        <input type="hidden" name="action" value="set_balance">
+
+        <div class="form-header">
+            <label for="current_balance">Update Current Balance</label>
+        </div>
+        <div class="form-row inline-row">
+            <input
+                type="text"
+                id="current_balance"
+                name="current_balance"
+                placeholder="e.g. 1234.56"
+                value="{{ current_balance if current_balance is not none else '' }}"
+            >
+            <button type="submit">Set Current Balance</button>
+        </div>
+    </form>
+
+    <!-- Upload / append CSV -->
+    <form class="upload-form" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="action" value="upload">
+
+        <div class="form-header">
+            <label for="file">Upload Transactions</label>
+        </div>
+        <div class="form-row inline-row">
+            <input type="file" id="file" name="file" accept=".csv">
+            <button type="submit">Add Transactions</button>
+        </div>
+    </form>
+</div>
+
+<!-- Add manual transaction -->
+<section class="add-tx-section">
+    <h2 class="section-title">Add New Transaction</h2>
+    <form class="add-tx-form" method="post">
+        <input type="hidden" name="action" value="add_tx">
+
+        <!-- Row 1: date, bank description, custom description, amount -->
+        <div class="add-tx-row add-tx-row-main">
+            <div class="form-row">
+                <label for="new_date">Date</label>
+                <input type="text" id="new_date" name="new_date" placeholder="10-Nov-25 or 11/10/2025">
+            </div>
+
+            <div class="form-row">
+                <label for="new_description">Bank Description</label>
+                <input type="text" id="new_description" name="new_description" placeholder="Description from bank">
+            </div>
+
+            <div class="form-row">
+                <label for="new_custom_description">Custom Description</label>
+                <input type="text" id="new_custom_description" name="new_custom_description">
+            </div>
+
+            <div class="form-row">
+                <label for="new_amount">Amount</label>
+                <input type="text" id="new_amount" name="new_amount" placeholder="-45.67 or 120.00">
+            </div>
+        </div>
+
+        <!-- Row 2: type, parent, sub, recurring, add button -->
+        <div class="add-tx-row add-tx-row-secondary">
+            <div class="form-row">
+                <label for="new_category_type">Category Type</label>
+                <select id="new_category_type" name="new_category_type"
+                        class="category-type-input" data-tx-id="new"
+                        data-current-parent="" data-current-sub="">
+                    <option value=""></option>
+                    <option value="Income">Income</option>
+                    <option value="Bills">Bills</option>
+                    <option value="Expenses">Expenses</option>
+                    <option value="Debts">Debts</option>
+                    <option value="Investments">Investments</option>
+                    <option value="Transfers">Transfers</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <label for="new_parent_category">Parent Category</label>
+                <select id="new_parent_category" name="new_parent_category"
+                        class="parent-category-input" data-tx-id="new" data-current="">
+                    <option value=""></option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <label for="new_sub_category">Sub Category</label>
+                <select id="new_sub_category" name="new_sub_category"
+                        class="sub-category-input" data-tx-id="new" data-current="">
+                    <option value=""></option>
+                </select>
+            </div>
+
+            <div class="form-row checkbox-row">
+                <label>
+                    <input type="checkbox" name="new_is_recurring" value="1">
+                    Recurring (Budget)
+                </label>
+            </div>
+
+            <div class="form-row add-tx-button-row">
+                <button type="submit">Add Transaction</button>
+            </div>
+        </div>
+    </form>
+</section>
+
+{% if transactions %}
+
+    <!-- ONE BIG EDIT FORM for all transactions -->
+    <form method="post" id="edit-transactions-form">
+        <input type="hidden" name="action" value="save_all">
+
+        <div class="table-wrapper">
+            <table class="transactions-table">
+                <thead>
+                <tr>
+                    <th class="col-date">Date</th>
+                    <th class="col-desc col-desc-bank">Bank Description</th>
+                    <th class="col-desc col-desc-custom">Custom Description</th>
+                    <th class="col-type">Type</th>
+                    <th class="col-parent">Parent</th>
+                    <th class="col-sub">Subcategory</th>
+                    <th class="col-amount">Amount</th>
+                    <th class="col-balance">Balance</th>
+                    <th class="col-budget">R</th>
+                    <th class="col-delete col-actions">⋯</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for tx in transactions %}
+                    <!-- Main row for this transaction -->
+                    <tr class="transaction-row {% if tx.amount < 0 %}tx-negative{% elif tx.amount > 0 %}tx-positive{% endif %}"
+                        data-tx-id="{{ tx.id }}"
+                        data-description="{{ tx.description }}"
+                        data-amount="{{ tx.amount }}"
+                        data-date="{{ tx.date_display }}">
+                        <!-- register this row id for server -->
+                        <input type="hidden" name="row_id" value="{{ tx.id }}">
+
+                        <td class="col-date" title="{{ tx.date_display }}">
+                            {{ tx.date_display }}
+                        </td>
+
+                        <td class="col-desc col-desc-bank" title="{{ tx.description }}">
+                            {{ tx.description }}
+                        </td>
+
+                        <!-- Custom Description + Similar panel -->
+                        <td class="col-desc col-desc-custom">
+                            <input
+                                type="text"
+                                class="custom-desc-input"
+                                data-tx-id="{{ tx.id }}"
+                                name="custom_description_{{ tx.id }}"
+                                value="{{ tx.custom_description or '' }}"
+                                placeholder="Custom Description"
+                                title="{{ tx.custom_description or '' }}"
+                            >
+                            <div class="similar-panel" data-tx-id="{{ tx.id }}" style="display:none;"></div>
+                            <input type="hidden" name="propagate_to_{{ tx.id }}" id="propagate-to-{{ tx.id }}" value="">
+                        </td>
+
+                        <td class="col-type">
+                            <select class="category-type-input"
+                                    data-tx-id="{{ tx.id }}"
+                                    name="category_type_{{ tx.id }}"
+                                    data-current-parent="{{ tx.parent_category or '' }}"
+                                    data-current-sub="{{ tx.sub_category or '' }}"
+                                    title="{{ tx.category_type or '' }}">
+                                <option value="" {% if not tx.category_type %}selected{% endif %}></option>
+                                <option value="Income" {% if tx.category_type == 'Income' %}selected{% endif %}>Income</option>
+                                <option value="Bills" {% if tx.category_type == 'Bills' %}selected{% endif %}>Bills</option>
+                                <option value="Expenses" {% if tx.category_type == 'Expenses' %}selected{% endif %}>Expenses</option>
+                                <option value="Debts" {% if tx.category_type == 'Debts' %}selected{% endif %}>Debts</option>
+                                <option value="Investments" {% if tx.category_type == 'Investments' %}selected{% endif %}>Investments</option>
+                                <option value="Transfers" {% if tx.category_type == 'Transfers' %}selected{% endif %}>Transfers</option>
+                            </select>
+                        </td>
+
+                        <td class="col-parent">
+                            <select class="parent-category-input"
+                                    data-tx-id="{{ tx.id }}"
+                                    name="parent_category_{{ tx.id }}"
+                                    data-current="{{ tx.parent_category or '' }}"
+                                    title="{{ tx.parent_category or '' }}">
+                                <option value=""></option>
+                                <!-- JS will fill -->
+                            </select>
+                        </td>
+
+                        <td class="col-sub">
+                            <select class="sub-category-input"
+                                    data-tx-id="{{ tx.id }}"
+                                    name="sub_category_{{ tx.id }}"
+                                    data-current="{{ tx.sub_category or '' }}"
+                                    title="{{ tx.sub_category or '' }}">
+                                <option value=""></option>
+                                <!-- JS will fill -->
+                            </select>
+                        </td>
+
+                        <td class="col-amount" title="{{ tx.amount | currency }}">
+                            {{ tx.amount | currency }}
+                        </td>
+
+                        <td class="col-balance" title="{{ tx.balance | currency }}">
+                            {{ tx.balance | currency }}
+                        </td>
+
+                        <td class="col-budget">
+                            <input type="checkbox"
+                                   class="recurring-checkbox"
+                                   data-tx-id="{{ tx.id }}"
+                                   name="is_recurring_{{ tx.id }}"
+                                   value="1"
+                                   {% if tx.is_recurring %}checked{% endif %}
+                                   title="{% if tx.is_recurring %}Recurring{% else %}Not Recurring{% endif %}">
+                        </td>
+
+                        <td class="col-delete col-actions">
+                            <button type="button" class="row-menu-btn" title="More actions">
+                                ⋯
+                            </button>
+                            <div class="row-menu" data-tx-id="{{ tx.id }}" style="display:none;">
+                                <button type="button" class="row-menu-save">Save</button>
+
+                                <form method="post" class="inline-form delete-form row-delete-form">
+                                    <input type="hidden" name="action" value="delete_tx">
+                                    <input type="hidden" name="tx_id" value="{{ tx.id }}">
+                                    <button type="submit" class="row-menu-delete">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Single Save button for all edits -->
+        <div class="save-all-row">
+            <button type="submit" class="save-button">
+                Save Changes
+            </button>
+        </div>
+    </form>
+
+{% else %}
+    <p class="no-data">
+        No transactions found yet. Upload a CSV or add a manual transaction above.
+    </p>
+{% endif %}
+
+{% if duplicates %}
+    <div class="duplicates-wrapper">
+        <h2>Duplicate Transactions</h2>
+        <p>Select Duplicates to Delete<strong>Delete</strong>.</p>
+        <form method="post">
+            <input type="hidden" name="action" value="delete_duplicates">
+            <table class="transactions-table duplicates-table">
+                <thead>
+                <tr>
+                    <th class="col-select">Select</th>
+                    <th class="col-date">Date</th>
+                    <th class="col-desc">Description</th>
+                    <th class="col-amount">Amount</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for d in duplicates %}
+                    <tr>
+                        <td class="col-select">
+                            <input type="checkbox" name="delete_ids" value="{{ d.id }}">
+                        </td>
+                        <td class="col-date" title="{{ d.date_display }}">
+                            {{ d.date_display }}
+                        </td>
+                        <td class="col-desc" title="{{ d.description }}">
+                            {{ d.description }}
+                        </td>
+                        <td class="col-amount" title="{{ d.amount | currency }}">
+                            {{ d.amount | currency }}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <div class="duplicates-actions">
+                <button type="submit">Delete Duplicates</button>
+            </div>
+        </form>
+    </div>
+{% endif %}
+
+{% endblock %}

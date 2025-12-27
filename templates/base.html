@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}Budget App{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/styles.css') }}">
+</head>
+<body>
+<div class="page-container">
+
+    <header class="top-bar">
+        <h1 class="page-title">{% block header %}Budget App{% endblock %}</h1>
+
+        <nav class="tabs">
+            <a href="{{ url_for('index') }}"
+               class="tab {% if active_tab == 'summary' %}active{% endif %}">
+                Summary
+            </a>
+            <a href="{{ url_for('manage') }}"
+               class="tab {% if active_tab == 'manage' %}active{% endif %}">
+                Manage
+            </a>
+        </nav>
+    </header>
+
+    {% block body %}{% endblock %}
+
+</div>
+
+<script src="{{ url_for('static', filename='scripts/script.js') }}"></script>
+</body>
+</html>
