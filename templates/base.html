@@ -22,6 +22,12 @@
                class="tab {% if active_tab == 'manage' %}active{% endif %}">
                 Manage
             </a>
+
+            <a href="{{ url_for('settings') }}"
+               class="tab {% if active_tab == 'settings' %}active{% endif %}">
+                Settings
+            </a>
+
         </nav>
     </header>
 

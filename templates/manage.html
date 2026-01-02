@@ -12,52 +12,12 @@
 <!-- Top controls: balance + upload + export + add transaction -->
 <div class="top-controls-wrapper">
     <div class="top-controls">
-        <!-- Current Balance form -->
-        <div class="control-box">
-            <div class="control-header">Update Current Balance</div>
-            <form class="balance-form" method="post">
-                <input type="hidden" name="action" value="set_balance">
-                <div class="control-content">
-                  <label for="current_balance"></label><input
-                        type="text"
-                        id="current_balance"
-                        name="current_balance"
-                        placeholder="e.g. 1234.56"
-                        value="{{ current_balance if current_balance is not none else '0.0' }}"
-                    >
-                    <button type="submit">Submit</button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Upload CSV -->
-        <div class="control-box">
-            <div class="control-header">Upload Transactions</div>
-            <form class="upload-form" method="post" enctype="multipart/form-data">
-                <input type="hidden" name="action" value="upload">
-                <div class="control-content">
-                    <input type="file" id="file" name="file" accept=".csv">
-                    <button type="submit">Add</button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Export CSV -->
-        <div class="control-box export-box">
-            <div class="control-header">Export Transactions</div>
-            <div class="control-content">
-                <a href="{{ url_for('export_transactions') }}" class="export-btn">
-                    Download CSV
-                </a>
-            </div>
-        </div>
-
         <!-- Add Transaction -->
-        <div class="control-box add-tx-box">
+        <div class="control-box">
             <div class="control-header">Add Transaction</div>
             <div class="control-content">
                 <button type="button" id="open-add-tx-dialog" class="add-tx-btn">
-                    Add New
+                    Add New Transaction
                 </button>
             </div>
         </div>

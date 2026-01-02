@@ -633,6 +633,123 @@ def manage(page=1):
     )
 
 
+@app.route("/settings", methods=["GET", "POST"])
+def settings():
+    """
+    Settings page:
+      - set current balance
+      - export transactions
+      - add manual transaction via dialog
+    """
+    error = None
+    current_balance = get_current_balance()
+
+    if request.method == "POST":
+        action = request.form.get("action")
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        # UPDATE CURRENT BALANCE
+        if action == "set_balance":
+            raw = (request.form.get("current_balance") or "").replace(",", "").strip()
+            if not raw:
+                error = "Current balance is required."
+            else:
+                try:
+                    cb = Decimal(raw)
+                    cb = normalize_amount(cb)
+
+                    # Calculate what the starting balance must have been
+                    cur.execute("SELECT COALESCE(SUM(CAST(amount AS REAL)), 0) FROM transactions")
+                    total_transactions = Decimal(str(cur.fetchone()[0]))
+                    total_transactions = normalize_amount(total_transactions)
+
+                    starting_balance = cb - total_transactions
+                    starting_balance = normalize_amount(starting_balance)
+
+                    # Store both values
+                    set_current_balance(cb)
+                    cur.execute("""
+                        INSERT OR REPLACE INTO settings (key, value)
+                        VALUES ('starting_balance', ?)
+                    """, (str(starting_balance),))
+
+                    current_balance = cb
+                except InvalidOperation:
+                    error = "Current balance must be a valid number."
+
+        # ADD A NEW MANUAL TRANSACTION
+        elif action == "add_tx":
+            amount = None
+            date_str = (request.form.get("new_date") or "").strip()
+            desc = (request.form.get("new_description") or "").strip()
+            amt_str = (request.form.get("new_amount") or "").replace(",", "").strip()
+
+            custom_description = (request.form.get("new_custom_description") or "").strip() or None
+            category_type = (request.form.get("new_category_type") or "").strip() or None
+            parent_category = (request.form.get("new_parent_category") or "").strip() or None
+            sub_category = (request.form.get("new_sub_category") or "").strip() or None
+            is_recurring_raw = request.form.get("new_is_recurring")
+            is_recurring = 1 if is_recurring_raw == "1" else 0
+
+            add_another = request.form.get("add_another") == "1"
+
+            if not (date_str and desc and amt_str):
+                error = "Date, description, and amount are required for a new transaction."
+            else:
+                date_obj = parse_date(date_str)
+                try:
+                    amount = Decimal(amt_str)
+                except InvalidOperation:
+                    error = "Amount must be a valid number."
+
+                if not error:
+                    amount = normalize_amount(amount)
+                    if date_obj:
+                        date_key = date_obj.date().isoformat()
+                        date_raw = date_str
+                    else:
+                        date_key = date_str
+                        date_raw = date_str
+
+                    cur.execute(
+                        """
+                        INSERT INTO transactions
+                        (date_key, date_raw, description, amount,
+                         custom_description, category_type,
+                         parent_category, sub_category, is_recurring)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (date_key, date_raw, desc, str(amount),
+                         custom_description, category_type,
+                         parent_category, sub_category, is_recurring),
+                    )
+
+                    # If "add another" is checked, return success without redirecting
+                    if add_another:
+                        conn.commit()
+                        recalculate_current_balance()
+                        conn.close()
+                        return '', 204  # No content response for AJAX
+
+        conn.commit()
+        conn.close()
+
+        recalculate_current_balance()
+
+        return redirect(url_for("settings"))
+
+    current_balance = get_current_balance()
+
+    return render_template(
+        "settings.html",
+        current_balance=current_balance,
+        error=error,
+        active_tab="settings"
+    )
+
+
 def recalculate_current_balance():
     """
     Recalculate current balance after transaction changes.

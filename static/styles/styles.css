@@ -831,3 +831,39 @@ body {
 .col-actions:hover .header-icon {
     opacity: 1;
 }
+
+/* Settings Page */
+.settings-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.settings-section {
+    margin-bottom: 40px;
+}
+
+.section-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.settings-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.control-description {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #666;
+    line-height: 1.4;
+}
+
+/* Adjust control box for settings */
+.settings-controls .control-box {
+    max-width: none;
+}
