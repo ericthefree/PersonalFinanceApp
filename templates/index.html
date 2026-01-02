@@ -39,7 +39,7 @@
                         {{ tx.balance | currency }}
                     </td>
                     <td class="col-budget" title="Recurring Transaction">
-                        {% if tx.is_recurring %}B{% endif %}
+                        {% if tx.is_recurring %}R{% endif %}
                     </td>
                 </tr>
             {% endfor %}
