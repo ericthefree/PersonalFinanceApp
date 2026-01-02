@@ -486,3 +486,121 @@ def process_delete_budget_item(item_id):
         return True, None
     except Exception as e:
         return False, f"Error deleting budget item: {str(e)}"
+
+
+def search_transactions(description=None, category_type=None, parent_category=None,
+                        sub_category=None, amount=None, exact_amount=False,
+                        uncategorized_only=False):
+    """
+    Search transactions based on criteria.
+    Returns list of matching transactions.
+    """
+    from app.db import get_db_connection
+    from decimal import Decimal
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    query = "SELECT * FROM transactions WHERE 1=1"
+    params = []
+
+    if uncategorized_only:
+        query += " AND (category_type IS NULL OR category_type = '')"
+        query += " AND (parent_category IS NULL OR parent_category = '')"
+        query += " AND (sub_category IS NULL OR sub_category = '')"
+    else:
+        if description:
+            query += " AND description LIKE ?"
+            params.append(f"%{description}%")
+
+        if category_type:
+            query += " AND category_type = ?"
+            params.append(category_type)
+
+        if parent_category:
+            query += " AND parent_category = ?"
+            params.append(parent_category)
+
+        if sub_category:
+            query += " AND sub_category = ?"
+            params.append(sub_category)
+
+        if amount:
+            amount_decimal = Decimal(str(amount))
+            if exact_amount:
+                query += " AND CAST(amount AS REAL) = ?"
+                params.append(float(amount_decimal))
+            else:
+                # Search within ±$2
+                min_amount = float(amount_decimal - Decimal('2'))
+                max_amount = float(amount_decimal + Decimal('2'))
+                query += " AND CAST(amount AS REAL) BETWEEN ? AND ?"
+                params.append(min_amount)
+                params.append(max_amount)
+
+    query += " ORDER BY date_key DESC, id DESC"
+
+    cur.execute(query, params)
+    results = cur.fetchall()
+    conn.close()
+
+    return results
+
+
+def bulk_update_transactions(transaction_ids, custom_description=None,
+                             category_type=None, parent_category=None,
+                             sub_category=None, is_recurring=None):
+    """
+    Bulk update multiple transactions.
+    Only updates fields that are provided (not None).
+    """
+    from app.db import get_db_connection, recalculate_current_balance
+
+    if not transaction_ids:
+        return False, "No transactions selected."
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        # Build dynamic UPDATE query based on provided fields
+        update_fields = []
+        params = []
+
+        if custom_description is not None:
+            update_fields.append("custom_description = ?")
+            params.append(custom_description if custom_description else None)
+
+        if category_type is not None:
+            update_fields.append("category_type = ?")
+            params.append(category_type if category_type else None)
+
+        if parent_category is not None:
+            update_fields.append("parent_category = ?")
+            params.append(parent_category if parent_category else None)
+
+        if sub_category is not None:
+            update_fields.append("sub_category = ?")
+            params.append(sub_category if sub_category else None)
+
+        if is_recurring is not None:
+            update_fields.append("is_recurring = ?")
+            params.append(is_recurring)
+
+        if not update_fields:
+            return False, "No fields to update."
+
+        # Update each transaction
+        for tx_id in transaction_ids:
+            query = f"UPDATE transactions SET {', '.join(update_fields)} WHERE id = ?"
+            cur.execute(query, params + [tx_id])
+
+        conn.commit()
+        recalculate_current_balance()
+        return True, None
+
+    except Exception as e:
+        conn.rollback()
+        return False, f"Error updating transactions: {str(e)}"
+    finally:
+        conn.close()

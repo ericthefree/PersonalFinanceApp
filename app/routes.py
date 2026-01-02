@@ -1,5 +1,6 @@
 from flask import render_template, request, redirect, url_for, send_file
 import csv
+import json
 from io import StringIO, BytesIO
 from datetime import datetime
 
@@ -19,7 +20,8 @@ from app.handlers import (
     update_current_balance,
     extract_transaction_updates,
     format_export_date,
-    recalculate_current_balance
+    recalculate_current_balance,
+    search_transactions
 )
 
 
@@ -98,6 +100,76 @@ def register_routes(app):
                 # If there's an error, don't redirect - show it
                 if not success:
                     print(f"Error adding transaction: {error}")  # Debug log
+
+            elif action == "bulk_search":
+                description = request.form.get("search_description", "").strip()
+                category_type = request.form.get("search_category_type", "").strip() or None
+                parent_category = request.form.get("search_parent_category", "").strip() or None
+                sub_category = request.form.get("search_sub_category", "").strip() or None
+                amount_str = request.form.get("search_amount", "").replace(",", "").strip()
+                exact_amount = request.form.get("search_exact_amount") == "1"
+                uncategorized_only = request.form.get("search_uncategorized") == "1"
+
+                amount = None
+                if amount_str:
+                    try:
+                        from decimal import Decimal
+                        amount = Decimal(amount_str)
+                    except ValueError:
+                        pass
+
+                search_results = search_transactions(
+                    description=description if description else None,
+                    category_type=category_type,
+                    parent_category=parent_category,
+                    sub_category=sub_category,
+                    amount=amount,
+                    exact_amount=exact_amount,
+                    uncategorized_only=uncategorized_only
+                )
+
+                # Format results for display
+                current_balance = get_current_balance()
+                search_transactions_list = build_transaction_view(
+                    len(search_results), search_results, current_balance
+                )
+
+                # Return as JSON for AJAX
+                from decimal import Decimal
+
+                def decimal_default(obj):
+                    if isinstance(obj, Decimal):
+                        return float(obj)
+                    raise TypeError
+
+                return json.dumps([dict(tx) for tx in search_transactions_list], default=decimal_default)
+
+            elif action == "bulk_update":
+                from app.handlers import bulk_update_transactions
+
+                selected_ids = request.form.getlist("selected_ids[]")
+                custom_desc = request.form.get("bulk_custom_description", "").strip()
+                category_type = request.form.get("bulk_category_type", "").strip()
+                parent_category = request.form.get("bulk_parent_category", "").strip()
+                sub_category = request.form.get("bulk_sub_category", "").strip()
+                is_recurring_raw = request.form.get("bulk_is_recurring")
+
+                # Only update fields that have values
+                custom_desc = custom_desc if custom_desc else None
+                category_type = category_type if category_type else None
+                parent_category = parent_category if parent_category else None
+                sub_category = sub_category if sub_category else None
+                is_recurring = 1 if is_recurring_raw == "1" else (0 if is_recurring_raw == "0" else None)
+
+                success, error = bulk_update_transactions(
+                    selected_ids, custom_desc, category_type,
+                    parent_category, sub_category, is_recurring
+                )
+
+                if success:
+                    return json.dumps({"success": True, "message": f"Updated {len(selected_ids)} transaction(s)"})
+                else:
+                    return json.dumps({"success": False, "error": error}), 400
 
             # Only recalculate balance when transactions are added/deleted/modified
             if action in ["upload", "delete_duplicates", "delete_tx", "save_all", "add_tx"]:
@@ -236,22 +308,22 @@ def register_routes(app):
             if action == "add_item":
                 success, error = process_add_budget_item(request.form)
                 if success:
-                    success_message = "Budget item added successfully!"
+                    print("Budget item added successfully!")
 
             elif action == "update_item":
                 success, error = process_update_budget_item(request.form)
                 if success:
-                    success_message = "Budget item updated successfully!"
+                    print("Budget item updated successfully!")
 
             elif action == "delete_item":
                 item_id = request.form.get("item_id")
                 success, error = process_delete_budget_item(item_id)
                 if success:
-                    success_message = "Budget item deleted successfully!"
+                    print("Budget item deleted successfully!")
 
             elif action == "import_recurring":
                 imported_count = import_recurring_transactions_to_budget()
-                success_message = f"Imported {imported_count} recurring transaction(s) to budget."
+                print(f"Imported {imported_count} recurring transaction(s) to budget.")
 
             return redirect(url_for("budget"))
 

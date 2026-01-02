@@ -1107,3 +1107,200 @@ body {
     font-family: inherit;
     resize: vertical;
 }
+
+/* Bulk Edit Dialog */
+.bulk-edit-dialog {
+    max-width: 1400px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.bulk-edit-btn {
+    width: 100%;
+    padding: 8px 16px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.bulk-edit-btn:hover {
+    background: #5a6268;
+}
+
+.search-section,
+.results-section {
+    padding: 20px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.search-section h3,
+.results-section h3 {
+    margin: 0 0 15px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.results-header {
+    margin-bottom: 15px;
+}
+
+.inline-edit-hint {
+    margin: 10px 0 0 0;
+    padding: 10px;
+    background: #e7f3ff;
+    border-left: 3px solid #007bff;
+    font-size: 13px;
+    color: #004085;
+}
+
+.search-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.search-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.search-field label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #555;
+}
+
+.search-field input[type="text"],
+.search-field select {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.checkbox-field {
+    flex-direction: row;
+    align-items: center;
+}
+
+.checkbox-field label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.search-actions,
+.bulk-edit-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.btn-secondary {
+    padding: 8px 16px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.results-table-wrapper {
+    max-height: 500px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+
+.bulk-edit-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+.bulk-edit-table th {
+    background: #f8f9fa;
+    padding: 10px 8px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+    color: #333;
+    border-bottom: 2px solid #dee2e6;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.bulk-edit-table td {
+    padding: 4px;
+    border-bottom: 1px solid #dee2e6;
+    font-size: 13px;
+}
+
+.bulk-edit-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.bulk-edit-table .select-col {
+    width: 40px;
+    text-align: center;
+    padding: 8px;
+}
+
+.bulk-edit-table tbody tr.selected {
+    background: #fff3cd;
+    border-left: 3px solid #ffc107;
+}
+
+/* Inline editing fields */
+.bulk-edit-table input[type="text"],
+.bulk-edit-table select {
+    width: 100%;
+    padding: 4px 6px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 13px;
+    background: white;
+}
+
+.bulk-edit-table input[type="text"]:focus,
+.bulk-edit-table select:focus {
+    outline: none;
+    border-color: #007bff;
+    background: #e7f3ff;
+}
+
+.bulk-edit-table input[type="checkbox"].recurring-check {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+}
+
+.bulk-edit-table tbody tr.selected input[type="text"],
+.bulk-edit-table tbody tr.selected select {
+    background: #fffaed;
+}
+
+.no-data {
+    text-align: center;
+    padding: 30px;
+    color: #999;
+    font-style: italic;
+}

@@ -21,6 +21,16 @@
                 </button>
             </div>
         </div>
+
+        <div class="control-box">
+            <div class="control-header">Search & Bulk Edit</div>
+            <div class="control-content">
+                <button type="button" id="open-bulk-edit-btn" class="bulk-edit-btn">
+                    Search & Bulk Edit
+                </button>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -279,5 +289,128 @@
         No transactions found yet. Upload a CSV or add a manual transaction above.
     </p>
 {% endif %}
+
+<!-- Search/Bulk Edit Dialog -->
+<div id="bulk-edit-dialog" class="dialog-overlay" style="display: none;">
+    <div class="dialog-content bulk-edit-dialog">
+        <div class="dialog-header">
+            <h2>Search & Bulk Edit Transactions</h2>
+            <button type="button" class="dialog-close" id="bulk-edit-close">&times;</button>
+        </div>
+
+        <!-- Search Form -->
+        <div class="search-section">
+            <h3>Search Criteria</h3>
+            <div class="search-form">
+                <div class="search-row">
+                    <div class="search-field">
+                        <label for="search_description">Description Contains</label>
+                        <input type="text" id="search_description" placeholder="Enter text to search">
+                    </div>
+
+                    <div class="search-field">
+                        <label for="search_amount">Amount</label>
+                        <input type="text" id="search_amount" placeholder="e.g., 45.67">
+                    </div>
+                </div>
+
+                <div class="search-row">
+                    <div class="search-field">
+                        <label for="search_category_type">Category Type</label>
+                        <select id="search_category_type" class="category-type-input"
+                                data-tx-id="search" data-current-parent="" data-current-sub="">
+                            <option value=""></option>
+                            <option value="Income">Income</option>
+                            <option value="Bills">Bills</option>
+                            <option value="Expenses">Expenses</option>
+                            <option value="Debts">Debts</option>
+                            <option value="Investments">Investments</option>
+                            <option value="Transfers">Transfers</option>
+                        </select>
+                    </div>
+
+                    <div class="search-field">
+                        <label for="search_parent_category">Parent Category</label>
+                        <select id="search_parent_category" class="parent-category-input"
+                                data-tx-id="search" data-current="">
+                            <option value=""></option>
+                        </select>
+                    </div>
+
+                    <div class="search-field">
+                        <label for="search_sub_category">Sub Category</label>
+                        <select id="search_sub_category" class="sub-category-input"
+                                data-tx-id="search" data-current="">
+                            <option value=""></option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="search-row">
+                    <div class="search-field checkbox-field">
+                        <label>
+                            <input type="checkbox" id="search_exact_amount" value="1">
+                            Exact amount match
+                        </label>
+                    </div>
+
+                    <div class="search-field checkbox-field">
+                        <label>
+                            <input type="checkbox" id="search_uncategorized" value="1">
+                            Uncategorized items only
+                        </label>
+                    </div>
+                </div>
+
+                <div class="search-actions">
+                    <button type="button" id="search-btn" class="btn-primary">Search</button>
+                    <button type="button" id="clear-search-btn" class="btn-secondary">Clear</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Results with Inline Editing -->
+        <div class="results-section" id="results-section" style="display: none;">
+            <div class="results-header">
+                <h3>Search Results (<span id="results-count">0</span> found)</h3>
+                <p class="inline-edit-hint">
+                    <strong>Tip:</strong> Check items you want to edit, then modify any field.
+                    Changes apply to all checked items.
+                </p>
+            </div>
+
+            <div class="results-table-wrapper">
+                <table class="bulk-edit-table">
+                    <thead>
+                        <tr>
+                            <th class="select-col">
+                                <input type="checkbox" id="select-all-checkbox">
+                            </th>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Custom Desc</th>
+                            <th>Amount</th>
+                            <th>Type</th>
+                            <th>Parent</th>
+                            <th>Sub</th>
+                            <th>R</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-tbody">
+                        <!-- Results populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="bulk-edit-actions">
+                <button type="button" id="bulk-save-btn" class="btn-success">
+                    Save Changes to Checked Items
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='scripts/bulk-edit.js') }}"></script>
 
 {% endblock %}
