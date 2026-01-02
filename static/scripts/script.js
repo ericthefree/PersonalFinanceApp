@@ -212,31 +212,123 @@ function initCategoryRow(txId) {
 }
 
 
-// Build group mapping for similar transactions: same description + amount
 function buildSimilarGroups() {
-    const groupMap = {};
-    const rowMeta = {};
+    /**
+     * Build a map of similar transactions based on:
+     * - Similar description (exact match)
+     * - Amount within ±5
+     * - Day within ±2 days but in different months
+     */
+    const allRows = document.querySelectorAll(".transaction-row");
+    const groupMap = {}; // txId -> array of similar txIds
+    const rowMeta = {};  // txId -> { description, amount, date, day, month, year }
 
-    const rows = document.querySelectorAll("tr.transaction-row[data-tx-id]");
-    rows.forEach(row => {
+    // First pass: collect metadata for all transactions
+    allRows.forEach(row => {
         const txId = row.getAttribute("data-tx-id");
-        if (!txId || txId === "new") return;
+        const description = row.getAttribute("data-description") || "";
+        const amountStr = row.getAttribute("data-amount") || "0";
+        const dateStr = row.getAttribute("data-date") || "";
 
-        const desc = row.getAttribute("data-description") || "";
-        const amount = row.getAttribute("data-amount") || "";
-        const date = row.getAttribute("data-date") || "";
+        const amount = parseFloat(amountStr);
 
-        const key = desc + "::" + amount;
-        if (!groupMap[key]) {
-            groupMap[key] = [];
+        // Parse date to get day, month, year
+        let day = null, month = null, year = null;
+        if (dateStr) {
+            // Expected format: "10-Nov-25" or similar
+            const dateParts = parseDateDisplay(dateStr);
+            if (dateParts) {
+                day = dateParts.day;
+                month = dateParts.month;
+                year = dateParts.year;
+            }
         }
-        groupMap[key].push(txId);
-        rowMeta[txId] = { desc, amount, date };
+
+        rowMeta[txId] = {
+            description: description.toLowerCase().trim(),
+            amount: amount,
+            date: dateStr,
+            day: day,
+            month: month,
+            year: year
+        };
+    });
+
+    // Second pass: find similar transactions for each row
+    Object.keys(rowMeta).forEach(txId => {
+        const current = rowMeta[txId];
+        const similarIds = [];
+
+        Object.keys(rowMeta).forEach(otherTxId => {
+            if (txId === otherTxId) return; // Skip self
+
+            const other = rowMeta[otherTxId];
+
+            // Check criteria:
+            // 1. Same description (case-insensitive)
+            const sameDescription = current.description === other.description;
+
+            // 2. Amount within ±5
+            const amountDiff = Math.abs(current.amount - other.amount);
+            const similarAmount = amountDiff <= 5;
+
+            // 3. Day within ±2 days AND different month
+            let similarDay = false;
+            if (current.day !== null && other.day !== null) {
+                const dayDiff = Math.abs(current.day - other.day);
+                const differentMonth = current.month !== other.month || current.year !== other.year;
+                similarDay = dayDiff <= 2 && differentMonth;
+            }
+
+            // Must match all criteria
+            if (sameDescription && similarAmount && similarDay) {
+                similarIds.push(otherTxId);
+            }
+        });
+
+        groupMap[txId] = similarIds;
     });
 
     return { groupMap, rowMeta };
 }
 
+function parseDateDisplay(dateStr) {
+    /**
+     * Parse date from display format "10-Nov-25" to extract day, month, year
+     * Returns { day: number, month: number (0-11), year: number } or null
+     */
+    if (!dateStr) return null;
+
+    // Try format: "10-Nov-25"
+    const match1 = dateStr.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2})$/);
+    if (match1) {
+        const day = parseInt(match1[1], 10);
+        const monthStr = match1[2].toLowerCase();
+        const year = 2000 + parseInt(match1[3], 10);
+
+        const months = {
+            'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'may': 4, 'jun': 5,
+            'jul': 6, 'aug': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dec': 11
+        };
+
+        const month = months[monthStr];
+        if (month !== undefined) {
+            return { day, month, year };
+        }
+    }
+
+    // Try format: "11/10/2025" or "11/10/25"
+    const match2 = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if (match2) {
+        const month = parseInt(match2[1], 10) - 1; // 0-indexed
+        const day = parseInt(match2[2], 10);
+        let year = parseInt(match2[3], 10);
+        if (year < 100) year += 2000;
+        return { day, month, year };
+    }
+
+    return null;
+}
 
 // Update hidden propagate_to_<id> based on selected checkboxes in panel
 function updatePropagateHidden(txId) {
@@ -251,77 +343,68 @@ function updatePropagateHidden(txId) {
     hidden.value = selected.join(",");
 }
 
-
-// Show similar transactions panel for a given row id
 function showSimilarPanel(txId, groupMap, rowMeta) {
-    const row = document.querySelector(`tr.transaction-row[data-tx-id="${txId}"]`);
-    if (!row) return;
-
-    const desc = row.getAttribute("data-description") || "";
-    const amount = row.getAttribute("data-amount") || "";
-    const key = desc + "::" + amount;
-
-    const group = groupMap[key] || [];
-    const others = group.filter(id => id !== txId);
-    if (others.length === 0) {
-        return;
-    }
-
     const panel = document.querySelector(`.similar-panel[data-tx-id="${txId}"]`);
     if (!panel) return;
 
-    const itemsHtml = others.map(id => {
-        const meta = rowMeta[id] || {};
-        const labelText = `${meta.date || ""} — ${meta.desc || ""} — ${meta.amount || ""}`;
-        return `
-            <li>
-                <label>
-                    <input type="checkbox"
-                           class="similar-checkbox"
-                           data-source-id="${txId}"
-                           data-target-id="${id}">
-                    ${labelText}
-                </label>
-            </li>
-        `;
-    }).join("");
+    const similarIds = groupMap[txId] || [];
 
-    panel.innerHTML = `
-        <div class="similar-panel-header">
-            <span>Apply these changes to similar transactions?</span>
-            <label>
-                <input type="checkbox"
-                       class="similar-select-all"
-                       data-source-id="${txId}">
-                Select all
-            </label>
-        </div>
-        <ul class="similar-list">
-            ${itemsHtml}
-        </ul>
-    `;
-
-    panel.style.display = "block";
-
-    const selectAll = panel.querySelector(`.similar-select-all[data-source-id="${txId}"]`);
-    if (selectAll) {
-        selectAll.addEventListener("change", function () {
-            const boxes = panel.querySelectorAll(`.similar-checkbox[data-source-id="${txId}"]`);
-            boxes.forEach(b => {
-                b.checked = selectAll.checked;
-            });
-            updatePropagateHidden(txId);
-        });
+    if (similarIds.length === 0) {
+        panel.style.display = "none";
+        panel.innerHTML = "";
+        document.getElementById(`propagate-to-${txId}`).value = "";
+        return;
     }
 
-    const checkboxes = panel.querySelectorAll(`.similar-checkbox[data-source-id="${txId}"]`);
-    checkboxes.forEach(box => {
-        box.addEventListener("change", function () {
-            updatePropagateHidden(txId);
+    // Build the panel HTML
+    let html = `<div class="similar-header">Found ${similarIds.length} similar transaction(s):</div>`;
+    html += '<div class="similar-checkboxes">';
+
+    similarIds.forEach(simId => {
+        const meta = rowMeta[simId];
+        const amountStr = meta.amount >= 0 ? `+$${meta.amount.toFixed(2)}` : `-$${Math.abs(meta.amount).toFixed(2)}`;
+
+        html += `
+            <label class="similar-item">
+                <input type="checkbox" 
+                       class="similar-checkbox" 
+                       data-target-id="${simId}"
+                       data-source-id="${txId}"
+                       checked>
+                <span>${meta.date} - ${meta.description.substring(0, 30)} - ${amountStr}</span>
+            </label>
+        `;
+    });
+
+    html += '</div>';
+    html += '<div class="similar-note">Changes will apply to checked transactions</div>';
+
+    panel.innerHTML = html;
+    panel.style.display = "block";
+
+    // Update hidden propagate_to field when checkboxes change
+    updatePropagateField(txId);
+
+    const checkboxes = panel.querySelectorAll(".similar-checkbox");
+    checkboxes.forEach(cb => {
+        cb.addEventListener("change", function() {
+            updatePropagateField(txId);
         });
     });
 }
 
+function updatePropagateField(txId) {
+    const panel = document.querySelector(`.similar-panel[data-tx-id="${txId}"]`);
+    if (!panel) return;
+
+    const checkedBoxes = panel.querySelectorAll(".similar-checkbox:checked");
+    const selectedIds = Array.from(checkedBoxes).map(cb => cb.getAttribute("data-target-id"));
+
+    const hiddenField = document.getElementById(`propagate-to-${txId}`);
+    if (hiddenField) {
+        hiddenField.value = selectedIds.join(",");
+    }
+}
 
 // Tooltip helper
 function updateFieldTooltip(el) {
@@ -334,15 +417,34 @@ function updateFieldTooltip(el) {
     }
 }
 
-
 document.addEventListener("DOMContentLoaded", function () {
-    // Delete confirmation on manage page
-    const deleteForms = document.querySelectorAll("form.delete-form");
-    deleteForms.forEach(form => {
-        form.addEventListener("submit", function (e) {
+    // Delete button handler
+    const deleteButtons = document.querySelectorAll(".row-menu-delete");
+    deleteButtons.forEach(btn => {
+        btn.addEventListener("click", function () {
+            const txId = btn.getAttribute("data-tx-id");
             const confirmed = confirm("Are you sure you want to delete this transaction?");
-            if (!confirmed) {
-                e.preventDefault();
+
+            if (confirmed) {
+                const formData = new FormData();
+                formData.append("action", "delete_tx");
+                formData.append("tx_id", txId);
+
+                fetch(window.location.href, {
+                    method: "POST",
+                    body: formData
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        alert("Error deleting transaction");
+                    }
+                })
+                .catch(error => {
+                    console.error("Delete error:", error);
+                    alert("Error deleting transaction");
+                });
             }
         });
     });
@@ -461,18 +563,34 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (m !== menu) m.style.display = "none";
             });
 
-            // Position and toggle this menu
-            const rect = btn.getBoundingClientRect();
-            menu.style.left = (rect.left - cell.getBoundingClientRect().left) + "px";
+            // Position menu relative to viewport
+            const btnRect = btn.getBoundingClientRect();
+
+            menu.style.position = "fixed";
+            menu.style.left = (btnRect.right + 5) + "px"; // 5px to the right of button
+            menu.style.top = btnRect.top + "px"; // Aligned with button
+
+            // Toggle display
             menu.style.display = (menu.style.display === "none" || menu.style.display === "") ? "block" : "none";
         });
     });
 
-    // Clicking outside closes menus
-    document.addEventListener("click", function () {
-        document.querySelectorAll(".row-menu").forEach(m => {
-            m.style.display = "none";
+    // Prevent clicks inside menus from closing them
+    const rowMenus = document.querySelectorAll(".row-menu");
+    rowMenus.forEach(menu => {
+        menu.addEventListener("click", function (e) {
+            e.stopPropagation();
         });
+    });
+
+    // Clicking outside closes menus
+    document.addEventListener("click", function (e) {
+        // Only close if not clicking inside a menu
+        if (!e.target.closest(".row-menu")) {
+            document.querySelectorAll(".row-menu").forEach(m => {
+                m.style.display = "none";
+            });
+        }
     });
 
     // Row-menu Save: submit full edit form
@@ -480,8 +598,132 @@ document.addEventListener("DOMContentLoaded", function () {
     rowMenuSaveButtons.forEach(btn => {
         btn.addEventListener("click", function () {
             if (editForm) {
+                btn.textContent = "Saving...";
+                btn.disabled = true;
                 editForm.submit();
             }
         });
     });
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    // ... your existing code ...
+
+    // Add Transaction Dialog
+    const openDialogBtn = document.getElementById("open-add-tx-dialog");
+    const dialog = document.getElementById("add-tx-dialog");
+    const closeDialogBtn = dialog?.querySelector(".dialog-close");
+    const cancelBtn = dialog?.querySelector(".btn-cancel");
+    const addTxForm = document.getElementById("add-tx-form");
+    const addAnotherCheckbox = document.getElementById("add_another_checkbox");
+    const addAnotherHidden = document.getElementById("add_another_hidden");
+
+    // Open dialog
+    if (openDialogBtn) {
+        openDialogBtn.addEventListener("click", function () {
+            dialog.style.display = "flex";
+        });
+    }
+
+    // Close dialog function
+    function closeDialog() {
+        dialog.style.display = "none";
+        clearAddTxForm();
+    }
+
+    // Clear form fields
+    function clearAddTxForm() {
+        document.getElementById("new_date").value = "";
+        document.getElementById("new_description").value = "";
+        document.getElementById("new_custom_description").value = "";
+        document.getElementById("new_amount").value = "";
+        document.getElementById("new_category_type").value = "";
+        document.getElementById("new_parent_category").value = "";
+        document.getElementById("new_sub_category").value = "";
+        document.getElementById("new_is_recurring").checked = false;
+        addAnotherCheckbox.checked = false;
+
+        // Clear message
+        const messageDiv = document.getElementById("add-tx-message");
+        if (messageDiv) {
+            messageDiv.style.display = "none";
+            messageDiv.className = "form-message";
+        }
+    }
+
+    // Close dialog on X button
+    if (closeDialogBtn) {
+        closeDialogBtn.addEventListener("click", closeDialog);
+    }
+
+    // Close dialog on Cancel button
+    if (cancelBtn) {
+        cancelBtn.addEventListener("click", closeDialog);
+    }
+
+    // Close dialog when clicking outside
+    if (dialog) {
+        dialog.addEventListener("click", function (e) {
+            if (e.target === dialog) {
+                closeDialog();
+            }
+        });
+    }
+
+    // Handle form submission
+    if (addTxForm) {
+        addTxForm.addEventListener("submit", function (e) {
+            const messageDiv = document.getElementById("add-tx-message");
+
+            // Hide any existing message
+            messageDiv.style.display = "none";
+            messageDiv.className = "form-message";
+
+            // Set the hidden field based on checkbox
+            addAnotherHidden.value = addAnotherCheckbox.checked ? "1" : "0";
+
+            // If "add another" is NOT checked, the form will submit normally and redirect
+            // If "add another" IS checked, we'll handle it via AJAX
+            if (addAnotherCheckbox.checked) {
+                e.preventDefault();
+
+                const formData = new FormData(addTxForm);
+
+                fetch(window.location.href, {
+                    method: "POST",
+                    body: formData
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Clear form but keep dialog open
+                        clearAddTxForm();
+
+                        // Show success message
+                        messageDiv.textContent = "Transaction added successfully!";
+                        messageDiv.className = "form-message success";
+                        messageDiv.style.display = "block";
+
+                        // Auto-hide message after 3 seconds
+                        setTimeout(() => {
+                            messageDiv.style.display = "none";
+                        }, 3000);
+                    } else {
+                        // Show error message
+                        messageDiv.textContent = "Error adding transaction. Please check your input.";
+                        messageDiv.className = "form-message error";
+                        messageDiv.style.display = "block";
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+
+                    // Show error message
+                    messageDiv.textContent = "Network error. Please try again.";
+                    messageDiv.className = "form-message error";
+                    messageDiv.style.display = "block";
+                });
+            }
+            // If checkbox not checked, form submits normally and page redirects
+        });
+    }
 });

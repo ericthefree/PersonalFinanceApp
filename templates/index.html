@@ -30,7 +30,7 @@
                         {{ tx.date_display }}
                     </td>
                     <td class="col-desc" title="{{ tx.display_description }}">
-                        {{ tx.display_description }}
+                        {{ tx.custom_description if tx.custom_description else tx.display_description }}
                     </td>
                     <td class="col-amount" title="{{ tx.amount | currency }}">
                         {{ tx.amount | currency }}
@@ -46,6 +46,26 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Pagination Controls -->
+    {% if total_pages > 1 %}
+    <div class="pagination">
+        <div class="pagination-info">
+            Page {{ page }} of {{ total_pages }} ({{ total_transactions }} total transactions)
+        </div>
+        <div class="pagination-buttons">
+            {% if page > 1 %}
+                <a href="{{ url_for('index', page=1) }}" class="page-btn">« First</a>
+                <a href="{{ url_for('index', page=page-1) }}" class="page-btn">‹ Previous</a>
+            {% endif %}
+
+            {% if page < total_pages %}
+                <a href="{{ url_for('index', page=page+1) }}" class="page-btn">Next ›</a>
+                <a href="{{ url_for('index', page=total_pages) }}" class="page-btn">Last »</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 {% else %}
     <p class="no-data">
         No transactions loaded yet. Go to

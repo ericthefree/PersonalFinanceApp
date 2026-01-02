@@ -67,23 +67,23 @@ body {
 }
 
 /* Top control bar: balance + upload side by side */
+/* Container for all three control boxes */
 .top-controls {
     display: flex;
+    gap: 20px;
     flex-wrap: wrap;
-    gap: 8px 16px;
-    align-items: flex-start;
-    margin-bottom: 8px;
+    justify-content: center;
+    max-width: 1200px;
+    width: 100%;
+}
+.balance-form,
+.upload-form {
+    width: 100%;
 }
 
-.top-controls .balance-form,
-.top-controls .upload-form {
-    flex: 1 1 0;
-    display: flex;
-    flex-direction: column;
-    background: #ffffff;
-    padding: 8px;
-    border-radius: 4px;
-    border: 1px solid #ddd;
+.export-form {
+    flex: 1;
+    min-width: 250px;
 }
 
 /* Form headers centered */
@@ -271,10 +271,13 @@ body {
     text-align: center;
 }
 
-.col-delete,
-.col-actions {
-    width: 60px;
+.col-delete {
+    width: 40px;
     text-align: center;
+}
+
+.col-actions {
+    position: relative;
 }
 
 .col-select {
@@ -315,15 +318,16 @@ body {
 
 /* Popup menu */
 .row-menu {
-    position: absolute;
-    background: #ffffff;
+    position: fixed; /* Changed from absolute */
+    z-index: 1000;
+    background: white;
     border: 1px solid #ccc;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    padding: 8px;
     border-radius: 4px;
-    padding: 4px 6px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    margin-top: 2px;
-    z-index: 10;
+    white-space: nowrap;
 }
+
 
 .row-menu button {
     display: block;
@@ -417,10 +421,13 @@ body {
     font-style: italic;
 }
 
-/* Responsive tweaks */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
     .top-controls {
         flex-direction: column;
+    }
+
+    .control-box {
+        max-width: 100%;
     }
 
     .inline-row {
@@ -435,4 +442,379 @@ body {
     .add-tx-row {
         flex-direction: column;
     }
+}
+
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    margin: 15px 0;
+    border-top: 1px solid #ddd;
+}
+
+.pagination-info {
+    color: #666;
+    font-size: 14px;
+}
+
+.pagination-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.page-btn {
+    padding: 8px 16px;
+    background: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.page-btn:hover {
+    background: #0056b3;
+}
+
+.similar-panel {
+    margin-top: 8px;
+    padding: 10px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.similar-header {
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #495057;
+}
+
+.similar-checkboxes {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.similar-item {
+    display: block;
+    padding: 4px 0;
+    cursor: pointer;
+}
+
+.similar-item:hover {
+    background: #e9ecef;
+}
+
+.similar-checkbox {
+    margin-right: 8px;
+}
+
+.similar-note {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.export-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #28a745;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.2s;
+    text-align: center;
+}
+
+.export-btn:hover {
+    background: #218838;
+}
+
+/* Wrapper to center the controls */
+.top-controls-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+/* Individual control box with border */
+.control-box {
+    flex: 1;
+    min-width: 280px;
+    max-width: 350px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 15px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Center the export button */
+.control-box:last-child .control-content {
+    justify-content: center;
+}
+
+/* Header for each control box */
+.control-header {
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+/* Content area (input + button on same row) */
+.control-content {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.control-content input[type="text"],
+.control-content input[type="file"] {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.control-content button,
+.control-content .export-btn {
+    padding: 8px 16px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.control-content button:hover,
+.control-content .export-btn:hover {
+    background: #007bff;
+}
+
+.control-content .export-btn {
+    background: #007bff;
+}
+
+.control-content .export-btn:hover {
+    background: #007bff;
+    justify-content: center;
+}
+
+/* Center the export button */
+.export-box .control-content {
+    justify-content: center;
+}
+
+/* Add Transaction button in control box */
+.add-tx-box .control-content {
+    justify-content: center;
+}
+
+.add-tx-btn {
+    width: 100%;
+    padding: 8px 16px;
+    background: #0056b3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    text-align: center;
+}
+
+.add-tx-btn:hover {
+    background: #0056b3;
+}
+
+.open-dialog-btn:hover {
+    background: #0056b3;
+}
+
+/* Dialog Overlay */
+.dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* Dialog Content */
+.dialog-content {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* Dialog Header */
+.dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #ddd;
+}
+
+.dialog-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #333;
+}
+
+.dialog-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    line-height: 1;
+}
+
+.dialog-close:hover {
+    color: #333;
+}
+
+/* Dialog Body - Two Column Layout */
+.dialog-body {
+    padding: 20px;
+}
+
+.form-field {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.form-field label {
+    text-align: right;
+    font-weight: 500;
+    color: #555;
+}
+
+.form-field input[type="text"],
+.form-field select {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.form-field input[type="checkbox"] {
+    justify-self: start;
+}
+
+/* Dialog Footer */
+.dialog-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-top: 1px solid #ddd;
+    background: #f8f9fa;
+}
+
+.add-another-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #555;
+    cursor: pointer;
+}
+
+.dialog-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-cancel,
+.btn-submit {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-cancel {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-cancel:hover {
+    background: #5a6268;
+}
+
+.btn-submit {
+    background: #28a745;
+    color: white;
+}
+
+.btn-submit:hover {
+    background: #218838;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .form-field {
+        grid-template-columns: 1fr;
+        gap: 5px;
+    }
+
+    .form-field label {
+        text-align: left;
+    }
+}
+
+/* Form message styling */
+.form-message {
+    margin: 15px 20px 0;
+    padding: 12px 15px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.form-message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.form-message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
 }
