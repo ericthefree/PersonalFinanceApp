@@ -866,4 +866,41 @@ body {
 /* Adjust control box for settings */
 .settings-controls .control-box {
     max-width: none;
+    box-sizing: border-box;
+    overflow: hidden;  /* Prevents content from extending outside */
+}
+
+.control-content-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+.control-content-vertical input[type="file"] {
+    width: 100%;
+    max-width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;  /* Important: includes padding in width calculation */
+    overflow: hidden;         /* Prevents text overflow */
+}
+
+.control-content-vertical button {
+    padding: 8px 16px;  /* Changed from 10px to 8px to match other buttons */
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+
+.control-content-vertical button:hover {
+    background: #0056b3;
 }

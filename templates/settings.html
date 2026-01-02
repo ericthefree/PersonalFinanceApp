@@ -28,7 +28,7 @@
                   placeholder="e.g. 1234.56"
                   value="{{ current_balance if current_balance is not none else '0.0' }}"
               >
-              <button type="submit">Update</button>
+              <button type="submit">Update Balance</button>
             </div>
           </form>
           <div class="control-description">
@@ -36,21 +36,19 @@
           </div>
         </div>
 
-        <!-- Upload Control -->
-        <div class="top-controls-wrapper">
-          <div class="top-controls">
-            <!-- Upload CSV -->
-            <div class="control-box upload-control-box">
-              <div class="control-header">Upload Transactions</div>
-              <form class="upload-form" method="post" enctype="multipart/form-data">
+        <!-- Upload CSV -->
+        <div class="control-box">
+            <div class="control-header">Upload Transactions</div>
+            <form class="upload-form" method="post" enctype="multipart/form-data">
                 <input type="hidden" name="action" value="upload">
                 <div class="control-content-vertical">
-                  <input type="file" id="file" name="file" accept=".csv">
-                  <button type="submit">Upload</button>
+                    <input type="file" id="file" name="file" accept=".csv">
+                    <button type="submit">Add New Transaction</button>
                 </div>
-              </form>
+            </form>
+            <div class="control-description">
+                Upload a CSV file containing transactions to import into your account.
             </div>
-          </div>
         </div>
 
         <!-- Export CSV -->
@@ -58,7 +56,7 @@
           <div class="control-header">Export Data</div>
           <div class="control-content">
             <a href="{{ url_for('export_transactions') }}" class="export-btn">
-              Download CSV
+              Export All Transactions (CSV)
             </a>
           </div>
           <div class="control-description">
