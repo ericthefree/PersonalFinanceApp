@@ -392,3 +392,97 @@ def format_export_date(date_key, date_raw):
     except ValueError:
         pass
     return date_raw
+
+
+def process_add_budget_item(form_data):
+    """Process adding a new budget item"""
+    from app.db import add_budget_item
+    from decimal import Decimal, InvalidOperation
+
+    description = form_data.get('description', '').strip()
+    amount_str = form_data.get('amount', '').replace(',', '').strip()
+    day_of_month = form_data.get('day_of_month', '').strip()
+    frequency = form_data.get('frequency', 'monthly').strip()
+    next_due_date = form_data.get('next_due_date', '').strip() or None
+    category_type = form_data.get('category_type', '').strip() or None
+    parent_category = form_data.get('parent_category', '').strip() or None
+    sub_category = form_data.get('sub_category', '').strip() or None
+    notes = form_data.get('notes', '').strip() or None
+
+    if not description or not amount_str or not day_of_month:
+        return False, "Description, amount, and day of month are required."
+
+    try:
+        amount = Decimal(amount_str)
+        day = int(day_of_month)
+
+        if day < 1 or day > 31:
+            return False, "Day of month must be between 1 and 31."
+
+    except (InvalidOperation, ValueError):
+        return False, "Invalid amount or day of month."
+
+    try:
+        add_budget_item(
+            description, str(amount), day, frequency, next_due_date,
+            category_type, parent_category, sub_category, notes
+        )
+        return True, None
+    except Exception as e:
+        return False, f"Error adding budget item: {str(e)}"
+
+
+def process_update_budget_item(form_data):
+    """Process updating a budget item"""
+    from app.db import update_budget_item
+    from decimal import Decimal, InvalidOperation
+
+    item_id = form_data.get('item_id')
+    description = form_data.get('description', '').strip()
+    amount_str = form_data.get('amount', '').replace(',', '').strip()
+    day_of_month = form_data.get('day_of_month', '').strip()
+    frequency = form_data.get('frequency', 'monthly').strip()
+    next_due_date = form_data.get('next_due_date', '').strip() or None
+    category_type = form_data.get('category_type', '').strip() or None
+    parent_category = form_data.get('parent_category', '').strip() or None
+    sub_category = form_data.get('sub_category', '').strip() or None
+    notes = form_data.get('notes', '').strip() or None
+
+    if not item_id:
+        return False, "Item ID is required."
+
+    if not description or not amount_str or not day_of_month:
+        return False, "Description, amount, and day of month are required."
+
+    try:
+        amount = Decimal(amount_str)
+        day = int(day_of_month)
+
+        if day < 1 or day > 31:
+            return False, "Day of month must be between 1 and 31."
+
+    except (InvalidOperation, ValueError):
+        return False, "Invalid amount or day of month."
+
+    try:
+        update_budget_item(
+            item_id, description, str(amount), day, frequency, next_due_date,
+            category_type, parent_category, sub_category, notes
+        )
+        return True, None
+    except Exception as e:
+        return False, f"Error updating budget item: {str(e)}"
+
+
+def process_delete_budget_item(item_id):
+    """Process deleting a budget item"""
+    from app.db import delete_budget_item
+
+    if not item_id:
+        return False, "Item ID is required."
+
+    try:
+        delete_budget_item(item_id)
+        return True, None
+    except Exception as e:
+        return False, f"Error deleting budget item: {str(e)}"

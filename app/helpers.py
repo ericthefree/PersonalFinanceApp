@@ -51,8 +51,10 @@ def parse_date(date_str):
     return None
 
 
-def normalize_amount(value: Decimal) -> Decimal:
+def normalize_amount(value) -> Decimal:
     """Normalize to 2 decimal places."""
+    if not isinstance(value, Decimal):
+        value = Decimal(str(value))
     return value.quantize(Decimal("0.01"))
 
 

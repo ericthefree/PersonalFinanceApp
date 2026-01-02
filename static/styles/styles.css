@@ -904,3 +904,206 @@ body {
 .control-content-vertical button:hover {
     background: #0056b3;
 }
+
+/* Budget Page Styles */
+.budget-controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    justify-content: flex-end;
+}
+
+.btn-primary,
+.btn-success {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #218838;
+}
+
+.budget-period {
+    margin-bottom: 40px;
+}
+
+.period-header {
+    font-size: 22px;
+    font-weight: 600;
+    color: #333;
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-left: 4px solid #ccc;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.period-header.current-period {
+    background: #e7f3ff;
+    border-left-color: #007bff;
+}
+
+.current-badge {
+    background: #007bff;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.period-summary {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 20px;
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.summary-item .label {
+    font-size: 13px;
+    color: #666;
+    font-weight: 500;
+}
+
+.summary-item .amount {
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.summary-item.income .amount {
+    color: #28a745;
+}
+
+.summary-item.expense .amount {
+    color: #dc3545;
+}
+
+.summary-item.net.positive .amount {
+    color: #28a745;
+}
+
+.summary-item.net.negative .amount {
+    color: #dc3545;
+}
+
+.budget-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.budget-table th {
+    background: #f8f9fa;
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.budget-table td {
+    padding: 12px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.budget-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.income-row {
+    border-left: 3px solid #28a745;
+}
+
+.expense-row {
+    border-left: 3px solid #dc3545;
+}
+
+.btn-edit,
+.btn-delete {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    margin-right: 5px;
+    transition: background 0.2s;
+}
+
+.btn-edit {
+    background: #007bff;
+    color: white;
+}
+
+.btn-edit:hover {
+    background: #0056b3;
+}
+
+.btn-delete {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-delete:hover {
+    background: #c82333;
+}
+
+.no-data {
+    text-align: center;
+    color: #999;
+    font-style: italic;
+    padding: 30px !important;
+}
+
+.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    padding: 12px 20px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.budget-dialog {
+    max-width: 600px;
+}
+
+.budget-dialog textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+}

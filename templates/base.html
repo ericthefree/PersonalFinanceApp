@@ -18,9 +18,15 @@
                class="tab {% if active_tab == 'summary' %}active{% endif %}">
                 Summary
             </a>
+
             <a href="{{ url_for('manage') }}"
                class="tab {% if active_tab == 'manage' %}active{% endif %}">
                 Manage
+            </a>
+
+            <a href="{{ url_for('budget') }}"
+               class="tab {% if active_tab == 'budget' %}active{% endif %}">
+                Budget
             </a>
 
             <a href="{{ url_for('settings') }}"

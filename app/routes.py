@@ -211,3 +211,72 @@ def register_routes(app):
             as_attachment=True,
             download_name=filename
         )
+
+    @app.route("/budget", methods=["GET", "POST"])
+    def budget():
+        """Budget management page"""
+        from app.db import get_budget_items, import_recurring_transactions_to_budget
+        from app.budget_helpers import (
+            categorize_budget_items_by_period,
+            calculate_period_totals,
+            get_current_period
+        )
+        from app.handlers import (
+            process_add_budget_item,
+            process_update_budget_item,
+            process_delete_budget_item
+        )
+
+        error = None
+        success_message = None
+
+        if request.method == "POST":
+            action = request.form.get("action")
+
+            if action == "add_item":
+                success, error = process_add_budget_item(request.form)
+                if success:
+                    success_message = "Budget item added successfully!"
+
+            elif action == "update_item":
+                success, error = process_update_budget_item(request.form)
+                if success:
+                    success_message = "Budget item updated successfully!"
+
+            elif action == "delete_item":
+                item_id = request.form.get("item_id")
+                success, error = process_delete_budget_item(item_id)
+                if success:
+                    success_message = "Budget item deleted successfully!"
+
+            elif action == "import_recurring":
+                imported_count = import_recurring_transactions_to_budget()
+                success_message = f"Imported {imported_count} recurring transaction(s) to budget."
+
+            return redirect(url_for("budget"))
+
+        # Get all budget items
+        budget_items = get_budget_items()
+
+        # Categorize by period
+        period1_items, period2_items = categorize_budget_items_by_period(budget_items)
+
+        # Calculate totals
+        period1_income, period1_expenses = calculate_period_totals(period1_items)
+        period2_income, period2_expenses = calculate_period_totals(period2_items)
+
+        current_period = get_current_period()
+
+        return render_template(
+            "budget.html",
+            period1_items=period1_items,
+            period2_items=period2_items,
+            period1_income=period1_income,
+            period1_expenses=period1_expenses,
+            period2_income=period2_income,
+            period2_expenses=period2_expenses,
+            current_period=current_period,
+            error=error,
+            success_message=success_message,
+            active_tab="budget"
+        )
