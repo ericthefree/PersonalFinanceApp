@@ -18,7 +18,7 @@
             <form class="balance-form" method="post">
                 <input type="hidden" name="action" value="set_balance">
                 <div class="control-content">
-                    <input
+                  <label for="current_balance"></label><input
                         type="text"
                         id="current_balance"
                         name="current_balance"
@@ -172,8 +172,12 @@
                     <th class="col-sub">Subcategory</th>
                     <th class="col-amount">Amount</th>
                     <th class="col-balance">Balance</th>
-                    <th class="col-budget">R</th>
-                    <th class="col-delete col-actions">⋯</th>
+                    <th class="col-budget" title="Recurring/Budget Items">R</th>
+                    <th class="col-delete col-actions" title="More Actions">
+                        <img src="{{ url_for('static', filename='images/menu_icon.png') }}"
+                             alt="Actions"
+                             class="header-icon">
+                    </th>
                 </tr>
                 </thead>
                 <tbody>

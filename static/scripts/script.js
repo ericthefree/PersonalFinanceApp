@@ -1,193 +1,41 @@
-// CATEGORY_MAP based on your provided structure
-const CATEGORY_MAP = {
-  Income: {
-    "Primary Income": [
-      "Salary",
-      "Bonus",
-      "Stock"
-    ],
-    "Other Income": [
-      "Interest Income",
-      "Dividends",
-      "Refunds",
-      "Reimbursements",
-      "Gifts",
-      "Transfer from Savings",
-      "Tax Refund"
-    ]
-  },
-  Bills: {
-    "Housing": [
-      "Mortgage/Rent",
-      "HOA Dues",
-      "Home Insurance",
-      "Home Maintenance"
-    ],
-    "Utilities": [
-      "Electricity",
-      "Water/Sewer",
-      "Natural Gas",
-      "Trash/Recycling",
-      "Internet",
-      "Streaming Services",
-      "Mobile Phone"
-    ],
-    "Transportation": [
-      "Insurance",
-      "Registration/Licensing",
-      "Parking",
-      "Maintenance"
-    ],
-    "Subscriptions": [
-      "Music",
-      "Movie Streaming Services",
-      "Cloud Storage",
-      "Software/Tech",
-      "News/Education"
-    ]
-  },
-
-  Expenses: {
-    "Groceries & Dining": [
-      "Groceries",
-      "Dining Out",
-      "Coffee/Snacks",
-      "Bars"
-    ],
-    "Health & Wellness": [
-      "Medical Bills",
-      "Prescriptions",
-      "Vitamins/Supplements",
-      "Gym Membership",
-      "Dental",
-      "Eye Care",
-      "Chiropractic",
-      "Massage"
-    ],
-    "Personal Care": [
-      "Haircuts",
-      "Clothing",
-      "Toiletries"
-    ],
-    "Household": [
-      "Cleaning Supplies",
-      "Furniture/Decor",
-      "Tools/Maintenance"
-    ],
-    "Entertainment & Hobbies": [
-      "Movies/Games/Books",
-      "Sports/Activities",
-      "Events/Concerts"
-    ],
-    "Education": [
-      "Courses/Training",
-      "Books/Materials",
-      "Tuition Payments"
-    ]
-  },
-
-  Debts: {
-    "Credit Cards": [
-      "Visa/Mastercard/Amex",
-      "Store Card"
-    ],
-    "Loans": [
-      "Student Loans",
-      "Auto Loan",
-      "Personal Loan",
-      "Debt Consolidation"
-    ]
-  },
-
-  Investments: {
-    "Emergency Fund": [
-      "Rainy Day Fund",
-      "3–6 Month Reserve"
-    ],
-    "Short-Term Savings": [
-      "Vacation Fund",
-      "Holiday Gifts",
-      "Home Improvement"
-    ],
-    "Long-Term Savings": [
-      "Retirement (401k, IRA)",
-      "Investment Account",
-      "College Fund"
-    ],
-    "Transfers": [
-      "To Savings Account",
-      "From Savings Account"
-    ]
-  },
-
-  Transfers: {
-    "Internal Transfers": [
-      "Checking ↔ Savings",
-      "Bank Fees",
-      "Credit Payment"
-    ],
-    "Adjustments": [
-      "Balance Adjustment",
-      "Bank Error Correction"
-    ]
-  }
+// Category hierarchy data structure
+const CATEGORY_HIERARCHY = {
+    "Income": {
+        "Employment": ["Salary", "Bonus", "Commission"],
+        "Business": ["Sales", "Services", "Consulting"],
+        "Investments": ["Dividends", "Interest", "Capital Gains"],
+        "Other": ["Gifts", "Refunds", "Miscellaneous"]
+    },
+    "Bills": {
+        "Housing": ["Rent/Mortgage", "Property Tax", "HOA Fees", "Insurance"],
+        "Utilities": ["Electric", "Gas", "Water", "Internet", "Phone"],
+        "Insurance": ["Health", "Auto", "Life", "Home"],
+        "Subscriptions": ["Streaming", "Software", "Memberships"]
+    },
+    "Expenses": {
+        "Food": ["Groceries", "Restaurants", "Fast Food", "Coffee"],
+        "Transportation": ["Gas", "Parking", "Public Transit", "Rideshare"],
+        "Shopping": ["Clothing", "Electronics", "Home Goods", "Personal Care"],
+        "Entertainment": ["Movies", "Events", "Hobbies", "Games"],
+        "Healthcare": ["Doctor", "Pharmacy", "Dental", "Vision"],
+        "Other": ["Miscellaneous"]
+    },
+    "Debts": {
+        "Credit Cards": ["Payment", "Interest"],
+        "Loans": ["Auto Loan", "Student Loan", "Personal Loan"],
+        "Mortgage": ["Principal", "Interest"]
+    },
+    "Investments": {
+        "Retirement": ["401k", "IRA", "Roth IRA"],
+        "Brokerage": ["Stocks", "Bonds", "ETFs", "Mutual Funds"],
+        "Savings": ["Emergency Fund", "Goal Savings"]
+    },
+    "Transfers": {
+        "Between Accounts": ["Checking to Savings", "Savings to Checking"],
+        "External": ["To Other Person", "From Other Person"]
+    }
 };
 
-
-// Populate parent category options based on category type
-function populateParentOptions(typeValue, parentSelect, currentParent) {
-    if (!parentSelect) return;
-
-    parentSelect.innerHTML = "";
-    const blank = document.createElement("option");
-    blank.value = "";
-    blank.textContent = "";
-    parentSelect.appendChild(blank);
-
-    if (!typeValue || !CATEGORY_MAP[typeValue]) {
-        return;
-    }
-
-    const parents = Object.keys(CATEGORY_MAP[typeValue]);
-    parents.forEach(parent => {
-        const opt = document.createElement("option");
-        opt.value = parent;
-        opt.textContent = parent;
-        if (parent === currentParent) {
-            opt.selected = true;
-        }
-        parentSelect.appendChild(opt);
-    });
-}
-
-
-// Populate subcategory options based on type + parent
-function populateSubOptions(typeValue, parentValue, subSelect, currentSub) {
-    if (!subSelect) return;
-
-    subSelect.innerHTML = "";
-    const blank = document.createElement("option");
-    blank.value = "";
-    blank.textContent = "";
-    subSelect.appendChild(blank);
-
-    if (!typeValue || !parentValue) return;
-    const typeObj = CATEGORY_MAP[typeValue];
-    if (!typeObj || !typeObj[parentValue]) return;
-
-    typeObj[parentValue].forEach(sub => {
-        const opt = document.createElement("option");
-        opt.value = sub;
-        opt.textContent = sub;
-        if (sub === currentSub) {
-            opt.selected = true;
-        }
-        subSelect.appendChild(opt);
-    });
-}
-
-
-// Initialize a row's category selects based on data attributes
 function initCategoryRow(txId) {
     const typeSelect = document.querySelector(`.category-type-input[data-tx-id="${txId}"]`);
     const parentSelect = document.querySelector(`.parent-category-input[data-tx-id="${txId}"]`);
@@ -195,22 +43,64 @@ function initCategoryRow(txId) {
 
     if (!typeSelect || !parentSelect || !subSelect) return;
 
-    const currentParent = parentSelect.getAttribute("data-current") ||
-                          typeSelect.getAttribute("data-current-parent") ||
-                          "";
-    const currentSub = subSelect.getAttribute("data-current") ||
-                       typeSelect.getAttribute("data-current-sub") ||
-                       "";
+    const currentType = typeSelect.value;
+    const currentParent = typeSelect.getAttribute("data-current-parent") || "";
+    const currentSub = typeSelect.getAttribute("data-current-sub") || "";
 
-    populateParentOptions(typeSelect.value, parentSelect, currentParent);
-    populateSubOptions(typeSelect.value, currentParent, subSelect, currentSub);
-
-    // Initial tooltips for selects
-    updateFieldTooltip(typeSelect);
-    updateFieldTooltip(parentSelect);
-    updateFieldTooltip(subSelect);
+    if (currentType) {
+        populateParentOptions(currentType, parentSelect, currentParent);
+        if (currentParent) {
+            populateSubOptions(currentType, currentParent, subSelect, currentSub);
+        }
+    }
 }
 
+function populateParentOptions(categoryType, parentSelect, currentParent) {
+    // Clear existing options
+    parentSelect.innerHTML = '<option value=""></option>';
+
+    if (!categoryType || !CATEGORY_HIERARCHY[categoryType]) return;
+
+    const parents = Object.keys(CATEGORY_HIERARCHY[categoryType]);
+    parents.forEach(parent => {
+        const option = document.createElement("option");
+        option.value = parent;
+        option.textContent = parent;
+        if (parent === currentParent) {
+            option.selected = true;
+        }
+        parentSelect.appendChild(option);
+    });
+}
+
+function populateSubOptions(categoryType, parentCategory, subSelect, currentSub) {
+    // Clear existing options
+    subSelect.innerHTML = '<option value=""></option>';
+
+    if (!categoryType || !parentCategory || !CATEGORY_HIERARCHY[categoryType]) return;
+
+    const subs = CATEGORY_HIERARCHY[categoryType][parentCategory];
+    if (!subs) return;
+
+    subs.forEach(sub => {
+        const option = document.createElement("option");
+        option.value = sub;
+        option.textContent = sub;
+        if (sub === currentSub) {
+            option.selected = true;
+        }
+        subSelect.appendChild(option);
+    });
+}
+
+function updateFieldTooltip(element) {
+    if (element.tagName === 'SELECT') {
+        const selectedOption = element.options[element.selectedIndex];
+        element.title = selectedOption ? selectedOption.text : "";
+    } else if (element.tagName === 'INPUT') {
+        element.title = element.value || "";
+    }
+}
 
 function buildSimilarGroups() {
     /**
@@ -235,7 +125,6 @@ function buildSimilarGroups() {
         // Parse date to get day, month, year
         let day = null, month = null, year = null;
         if (dateStr) {
-            // Expected format: "10-Nov-25" or similar
             const dateParts = parseDateDisplay(dateStr);
             if (dateParts) {
                 day = dateParts.day;
@@ -330,19 +219,6 @@ function parseDateDisplay(dateStr) {
     return null;
 }
 
-// Update hidden propagate_to_<id> based on selected checkboxes in panel
-function updatePropagateHidden(txId) {
-    const hidden = document.getElementById(`propagate-to-${txId}`);
-    if (!hidden) return;
-
-    const boxes = document.querySelectorAll(`.similar-checkbox[data-source-id="${txId}"]`);
-    const selected = Array.from(boxes)
-        .filter(b => b.checked)
-        .map(b => b.getAttribute("data-target-id"));
-
-    hidden.value = selected.join(",");
-}
-
 function showSimilarPanel(txId, groupMap, rowMeta) {
     const panel = document.querySelector(`.similar-panel[data-tx-id="${txId}"]`);
     if (!panel) return;
@@ -403,17 +279,6 @@ function updatePropagateField(txId) {
     const hiddenField = document.getElementById(`propagate-to-${txId}`);
     if (hiddenField) {
         hiddenField.value = selectedIds.join(",");
-    }
-}
-
-// Tooltip helper
-function updateFieldTooltip(el) {
-    if (!el) return;
-    if (el.tagName === "INPUT") {
-        el.title = el.value || "";
-    } else if (el.tagName === "SELECT") {
-        const opt = el.options[el.selectedIndex];
-        el.title = opt ? opt.textContent : "";
     }
 }
 
@@ -598,16 +463,10 @@ document.addEventListener("DOMContentLoaded", function () {
     rowMenuSaveButtons.forEach(btn => {
         btn.addEventListener("click", function () {
             if (editForm) {
-                btn.textContent = "Saving...";
-                btn.disabled = true;
                 editForm.submit();
             }
         });
     });
-});
-
-document.addEventListener("DOMContentLoaded", function () {
-    // ... your existing code ...
 
     // Add Transaction Dialog
     const openDialogBtn = document.getElementById("open-add-tx-dialog");

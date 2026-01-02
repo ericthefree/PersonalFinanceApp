@@ -564,7 +564,7 @@ def manage(page=1):
             add_another = request.form.get("add_another") == "1"
 
             if not (date_str and desc and amt_str):
-                error = "Date, description, and amount are required for a new transaction."
+                print("Date, description, and amount are required for a new transaction.")
             else:
                 date_obj = parse_date(date_str)
                 try:

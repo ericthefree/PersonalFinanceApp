@@ -818,3 +818,16 @@ body {
     color: #721c24;
     border: 1px solid #f5c6cb;
 }
+
+/* Header icon styling */
+.header-icon {
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+    opacity: 0.7;
+}
+
+/* Optional: Add hover effect */
+.col-actions:hover .header-icon {
+    opacity: 1;
+}

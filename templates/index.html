@@ -60,7 +60,7 @@
             {% endif %}
 
             {% if page < total_pages %}
-                <a href="{{ url_for('index', page=page+1) }}" class="page-btn">Next ›</a>
+                <a href="{{ url_for('index', page=page + 1) }}" class="page-btn">Next ›</a>
                 <a href="{{ url_for('index', page=total_pages) }}" class="page-btn">Last »</a>
             {% endif %}
         </div>
