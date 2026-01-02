@@ -527,16 +527,24 @@ def search_transactions(description=None, category_type=None, parent_category=No
 
         if amount:
             amount_decimal = Decimal(str(amount))
+
             if exact_amount:
-                query += " AND CAST(amount AS REAL) = ?"
+                # Search for both positive and negative exact amounts
+                query += " AND (CAST(amount AS REAL) = ? OR CAST(amount AS REAL) = ?)"
                 params.append(float(amount_decimal))
+                params.append(float(-amount_decimal))
             else:
-                # Search within ±$2
-                min_amount = float(amount_decimal - Decimal('2'))
-                max_amount = float(amount_decimal + Decimal('2'))
-                query += " AND CAST(amount AS REAL) BETWEEN ? AND ?"
-                params.append(min_amount)
-                params.append(max_amount)
+                # Search within -$2 to +$5 for both positive and negative amounts
+                min_amount_pos = float(amount_decimal - Decimal('2'))
+                max_amount_pos = float(amount_decimal + Decimal('5'))
+                min_amount_neg = float(-amount_decimal - Decimal('5'))
+                max_amount_neg = float(-amount_decimal + Decimal('2'))
+
+                query += " AND ((CAST(amount AS REAL) BETWEEN ? AND ?) OR (CAST(amount AS REAL) BETWEEN ? AND ?))"
+                params.append(min_amount_pos)
+                params.append(max_amount_pos)
+                params.append(min_amount_neg)
+                params.append(max_amount_neg)
 
     query += " ORDER BY date_key DESC, id DESC"
 

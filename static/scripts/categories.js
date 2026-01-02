@@ -10,7 +10,7 @@ const CATEGORY_HIERARCHY = {
     "Bills": {
         "Housing": ["Rent/Mortgage", "Property Tax", "HOA Fees", "Insurance"],
         "Utilities": ["Electric", "Gas", "Water", "Internet", "Phone"],
-        "Insurance": ["Health", "Auto", "Life", "Home"],
+        "Insurance": ["Health", "Auto", "Life", "Home", "Legal", "Identity Theft"],
         "Subscriptions": ["Streaming", "Software", "Memberships"]
     },
     "Expenses": {
