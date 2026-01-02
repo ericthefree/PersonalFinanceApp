@@ -1,3 +1,5 @@
+from decimal import InvalidOperation, Decimal
+
 from flask import render_template, request, redirect, url_for, send_file
 import csv
 import json
@@ -7,7 +9,8 @@ from datetime import datetime
 from app.db import (
     init_db,
     get_current_balance,
-    load_transactions
+    load_transactions,
+    update_budget_item
 )
 from app.helpers import (
     build_transaction_view
@@ -21,7 +24,9 @@ from app.handlers import (
     extract_transaction_updates,
     format_export_date,
     recalculate_current_balance,
-    search_transactions
+    search_transactions,
+    preview_csv_import,
+    confirm_csv_import
 )
 
 
@@ -60,9 +65,29 @@ def register_routes(app):
         if request.method == "POST":
             action = request.form.get("action")
 
-            if action == "upload":
+            # UPLOAD / APPEND CSV - PREVIEW
+            if action == "upload_preview":
+
                 uploaded_file = request.files.get("file")
-                duplicates, error = process_csv_upload(uploaded_file)
+                preview_list, error = preview_csv_import(uploaded_file)
+
+                if error:
+                    return json.dumps({"success": False, "error": error}), 400
+
+                return json.dumps({"success": True, "preview": preview_list})
+
+            # CONFIRM IMPORT
+            elif action == "confirm_import":
+                # Get the import data from the request
+                import_data_json = request.form.get("import_data")
+                if import_data_json:
+                    import_data = json.loads(import_data_json)
+                    success, error = confirm_csv_import(import_data)
+
+                    if success:
+                        return redirect(url_for("manage", page=page))
+                    else:
+                        return json.dumps({"success": False, "error": error}), 400
 
             elif action == "delete_duplicates":
                 delete_ids = request.form.getlist("delete_ids")
@@ -325,6 +350,33 @@ def register_routes(app):
                 imported_count = import_recurring_transactions_to_budget()
                 print(f"Imported {imported_count} recurring transaction(s) to budget.")
 
+            elif action == "save_budget":
+
+                item_ids = request.form.getlist("item_id")
+
+                for item_id in item_ids:
+                    description = request.form.get(f"description_{item_id}", "").strip()
+                    amount_str = request.form.get(f"amount_{item_id}", "").replace(",", "").strip()
+                    day_str = request.form.get(f"day_of_month_{item_id}", "").strip()
+                    frequency = request.form.get(f"frequency_{item_id}", "monthly").strip()
+                    next_due_date = request.form.get(f"next_due_date_{item_id}", "").strip() or None
+                    category_type = request.form.get(f"category_type_{item_id}", "").strip() or None
+                    parent_category = request.form.get(f"parent_category_{item_id}", "").strip() or None
+                    sub_category = request.form.get(f"sub_category_{item_id}", "").strip() or None
+                    notes = request.form.get(f"notes_{item_id}", "").strip() or None
+
+                    if description and amount_str and day_str:
+                        try:
+                            amount = Decimal(amount_str)
+                            day = int(day_str)
+
+                            update_budget_item(
+                                item_id, description, str(amount), day, frequency, next_due_date,
+                                category_type, parent_category, sub_category, notes
+                            )
+                        except (InvalidOperation, ValueError):
+                            continue
+
             return redirect(url_for("budget"))
 
         # Get all budget items
@@ -338,6 +390,8 @@ def register_routes(app):
         period2_income, period2_expenses = calculate_period_totals(period2_items)
 
         current_period = get_current_period()
+
+
 
         return render_template(
             "budget.html",

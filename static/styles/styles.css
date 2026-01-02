@@ -1304,3 +1304,245 @@ body {
     color: #999;
     font-style: italic;
 }
+
+/* Import Preview Dialog */
+.import-preview-dialog {
+    max-width: 1400px;
+    max-height: 90vh;
+}
+
+.import-preview-info {
+    padding: 15px 20px;
+    background: #e7f3ff;
+    border-left: 4px solid #007bff;
+    margin-bottom: 20px;
+    border-radius: 4px;
+}
+
+.import-preview-info p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.import-hint {
+    font-size: 13px;
+    color: #666;
+}
+
+.matched-badge {
+    color: #28a745;
+    font-size: 18px;
+}
+
+.import-preview-table-wrapper {
+    max-height: 500px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.import-preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+.import-preview-table th {
+    background: #f8f9fa;
+    padding: 10px 8px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+    color: #333;
+    border-bottom: 2px solid #dee2e6;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.import-preview-table td {
+    padding: 6px;
+    border-bottom: 1px solid #dee2e6;
+    font-size: 13px;
+}
+
+.import-preview-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.import-preview-table tbody tr.has-match {
+    background: #d4edda;
+}
+
+.import-preview-table input[type="text"],
+.import-preview-table select {
+    width: 100%;
+    padding: 4px 6px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 13px;
+}
+
+.import-preview-table input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.match-indicator {
+    color: #28a745;
+    font-weight: bold;
+    font-size: 16px;
+    margin-right: 5px;
+}
+
+/* Budget inline editing */
+.budget-table .inline-input,
+.budget-table .inline-select {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 13px;
+    background: white;
+}
+
+.budget-table .inline-input:focus,
+.budget-table .inline-select:focus {
+    outline: none;
+    border-color: #007bff;
+    background: #f8f9fa;
+}
+
+.budget-table .day-input {
+    width: 50px;
+}
+
+.budget-table .amount-input {
+    width: 100px;
+}
+
+.budget-table .col-day {
+    width: 60px;
+}
+
+.budget-table .col-description {
+    min-width: 180px;
+}
+
+.budget-table .col-amount {
+    width: 110px;
+}
+
+.budget-table .col-frequency {
+    width: 130px;
+}
+
+.budget-table .col-next-due {
+    width: 130px;
+}
+
+.budget-table .col-type {
+    width: 120px;
+}
+
+.budget-table .col-parent {
+    width: 140px;
+}
+
+.budget-table .col-sub {
+    width: 140px;
+}
+
+.budget-table .col-notes {
+    min-width: 150px;
+}
+
+.budget-table .col-actions {
+    width: 60px;
+}
+
+.monthly-indicator {
+    color: #999;
+    font-style: italic;
+}
+
+.save-all-row {
+    margin: 30px 0;
+    text-align: center;
+}
+
+.save-button {
+    padding: 12px 40px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.save-button:hover {
+    background: #218838;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+/* Row menu styles for budget */
+.budget-table .row-menu-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    color: #666;
+    padding: 4px 8px;
+}
+
+.budget-table .row-menu-btn:hover {
+    color: #333;
+    background: #f8f9fa;
+    border-radius: 3px;
+}
+
+.budget-table .row-menu {
+    position: fixed;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    min-width: 100px;
+}
+
+.budget-table .row-menu button {
+    display: block;
+    width: 100%;
+    padding: 8px 16px;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+}
+
+.budget-table .row-menu button:hover {
+    background: #f8f9fa;
+}
+
+.budget-table .row-menu-save {
+    color: #007bff;
+}
+
+.budget-table .row-menu-delete {
+    color: #dc3545;
+    border-top: 1px solid #ddd;
+}

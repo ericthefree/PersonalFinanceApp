@@ -7,14 +7,107 @@ document.addEventListener("DOMContentLoaded", function () {
     const budgetForm = document.getElementById("budget-item-form");
     const frequencySelect = document.getElementById("budget_frequency");
     const nextDueField = document.getElementById("next-due-field");
+    const budgetEditForm = document.getElementById("budget-edit-form");
 
-    // Initialize category dropdowns
-    initCategoryRow("budget");
+    // Initialize category dropdowns for dialog
+    initCategoryRow("new_budget");
+
+    // Initialize category dropdowns for all budget items
+    const budgetRows = document.querySelectorAll(".budget-row");
+    budgetRows.forEach(row => {
+        const itemId = row.getAttribute("data-item-id");
+        if (itemId) {
+            initCategoryRow(`budget_${itemId}`);
+        }
+    });
+
+    // Frequency change listeners to show/hide next due date
+    const frequencySelects = document.querySelectorAll(".frequency-select");
+    frequencySelects.forEach(select => {
+        select.addEventListener("change", function() {
+            const itemId = this.getAttribute("data-item-id");
+            const nextDueInput = document.querySelector(`.next-due-input[data-item-id="${itemId}"]`);
+            const monthlyIndicator = this.closest("tr").querySelector(".monthly-indicator");
+
+            if (this.value === "monthly") {
+                if (nextDueInput) nextDueInput.style.display = "none";
+                if (monthlyIndicator) monthlyIndicator.style.display = "inline";
+            } else {
+                if (nextDueInput) nextDueInput.style.display = "block";
+                if (monthlyIndicator) monthlyIndicator.style.display = "none";
+            }
+        });
+    });
+
+    // Row menu behavior
+    const rowMenuButtons = document.querySelectorAll(".row-menu-btn");
+
+    rowMenuButtons.forEach(btn => {
+        btn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            const cell = btn.closest("td");
+            const menu = cell.querySelector(".row-menu");
+            if (!menu) return;
+
+            // Close others
+            document.querySelectorAll(".row-menu").forEach(m => {
+                if (m !== menu) m.style.display = "none";
+            });
+
+            // Position menu relative to viewport
+            const btnRect = btn.getBoundingClientRect();
+            menu.style.position = "fixed";
+            menu.style.left = (btnRect.right + 5) + "px";
+            menu.style.top = btnRect.top + "px";
+
+            // Toggle display
+            menu.style.display = (menu.style.display === "none" || menu.style.display === "") ? "block" : "none";
+        });
+    });
+
+    // Prevent clicks inside menus from closing them
+    const rowMenus = document.querySelectorAll(".row-menu");
+    rowMenus.forEach(menu => {
+        menu.addEventListener("click", function (e) {
+            e.stopPropagation();
+        });
+    });
+
+    // Clicking outside closes menus
+    document.addEventListener("click", function (e) {
+        if (!e.target.closest(".row-menu")) {
+            document.querySelectorAll(".row-menu").forEach(m => {
+                m.style.display = "none";
+            });
+        }
+    });
+
+    // Row-menu Save: submit full edit form
+    const rowMenuSaveButtons = document.querySelectorAll(".row-menu-save");
+    rowMenuSaveButtons.forEach(btn => {
+        btn.addEventListener("click", function () {
+            if (budgetEditForm) {
+                budgetEditForm.submit();
+            }
+        });
+    });
+
+    // Delete buttons
+    const deleteButtons = document.querySelectorAll(".row-menu-delete");
+    deleteButtons.forEach(btn => {
+        btn.addEventListener("click", function () {
+            const itemId = btn.getAttribute("data-item-id");
+            if (confirm("Are you sure you want to delete this budget item?")) {
+                document.getElementById("delete-item-id").value = itemId;
+                document.getElementById("delete-item-form").submit();
+            }
+        });
+    });
 
     // Open dialog for adding new item
     if (addBudgetItemBtn) {
         addBudgetItemBtn.addEventListener("click", function () {
-            openDialog("add");
+            openDialog();
         });
     }
 
@@ -27,28 +120,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Edit buttons
-    const editButtons = document.querySelectorAll(".btn-edit");
-    editButtons.forEach(btn => {
-        btn.addEventListener("click", function () {
-            const itemId = btn.getAttribute("data-item-id");
-            openDialog("edit", itemId);
-        });
-    });
-
-    // Delete buttons
-    const deleteButtons = document.querySelectorAll(".btn-delete");
-    deleteButtons.forEach(btn => {
-        btn.addEventListener("click", function () {
-            const itemId = btn.getAttribute("data-item-id");
-            if (confirm("Are you sure you want to delete this budget item?")) {
-                document.getElementById("delete-item-id").value = itemId;
-                document.getElementById("delete-item-form").submit();
-            }
-        });
-    });
-
-    // Show/hide next due date based on frequency
+    // Show/hide next due date based on frequency in dialog
     if (frequencySelect) {
         frequencySelect.addEventListener("change", function () {
             if (this.value === "monthly") {
@@ -78,61 +150,14 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    function openDialog(mode, itemId = null) {
-        const dialogTitle = document.getElementById("dialog-title");
-        const formAction = document.getElementById("form-action");
-        const formItemId = document.getElementById("form-item-id");
-
-        if (mode === "add") {
-            dialogTitle.textContent = "Add Budget Item";
-            formAction.value = "add_item";
-            budgetForm.reset();
-            formItemId.value = "";
-            nextDueField.style.display = "none";
-        } else if (mode === "edit" && itemId) {
-            dialogTitle.textContent = "Edit Budget Item";
-            formAction.value = "update_item";
-            formItemId.value = itemId;
-            loadItemData(itemId);
-        }
-
+    function openDialog() {
+        budgetForm.reset();
+        nextDueField.style.display = "none";
         dialog.style.display = "flex";
     }
 
     function closeDialog() {
         dialog.style.display = "none";
         budgetForm.reset();
-    }
-
-    function loadItemData(itemId) {
-        // Find the row with this item
-        const row = document.querySelector(`button[data-item-id="${itemId}"]`)?.closest("tr");
-        if (!row) return;
-
-        const cells = row.querySelectorAll("td");
-
-        // Populate form fields
-        document.getElementById("budget_day").value = cells[0].textContent.trim();
-        document.getElementById("budget_description").value = cells[1].textContent.trim();
-
-        // Parse amount (remove currency formatting)
-        const amountText = cells[2].textContent.trim().replace(/[$,]/g, '');
-        document.getElementById("budget_amount").value = amountText;
-
-        // Set frequency
-        const frequency = cells[3].textContent.trim().toLowerCase();
-        document.getElementById("budget_frequency").value = frequency;
-
-        // Show/hide next due date field
-        if (frequency !== "monthly") {
-            nextDueField.style.display = "flex";
-            const nextDue = cells[4].textContent.trim();
-            if (nextDue !== "-") {
-                document.getElementById("budget_next_due").value = nextDue;
-            }
-        }
-
-        // Category would need to be parsed from cells[5]
-        // This is simplified - you may want to store more data attributes
     }
 });

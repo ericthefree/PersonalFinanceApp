@@ -612,3 +612,169 @@ def bulk_update_transactions(transaction_ids, custom_description=None,
         return False, f"Error updating transactions: {str(e)}"
     finally:
         conn.close()
+
+
+def preview_csv_import(uploaded_file):
+    """
+    Preview CSV import and match with existing transactions to pre-populate metadata.
+    Returns: (preview_list, error_message)
+    """
+    from app.db import get_db_connection
+    from decimal import Decimal, InvalidOperation
+    from app.helpers import parse_date, normalize_amount
+    import csv
+    from io import TextIOWrapper
+
+    if not uploaded_file or not uploaded_file.filename:
+        return [], "No file uploaded"
+
+    preview_list = []
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        wrapper = TextIOWrapper(uploaded_file.stream, encoding="utf-8-sig")
+        reader = csv.DictReader(wrapper)
+
+        for row in reader:
+            date_str = row.get("date") or row.get("Date") or row.get("DATE")
+            desc = row.get("description") or row.get("Description") or row.get("DESCRIPTION")
+            amt_str = row.get("amount") or row.get("Amount") or row.get("AMOUNT")
+
+            if not (date_str and desc and amt_str):
+                continue
+
+            date_str = date_str.strip()
+            desc = desc.strip()
+
+            date_obj = parse_date(date_str)
+
+            try:
+                amount = Decimal(amt_str.replace(",", "").strip())
+                amount = normalize_amount(amount)
+            except InvalidOperation:
+                continue
+
+            if date_obj:
+                date_key = date_obj.date().isoformat()
+                date_raw = date_str
+            else:
+                date_key = date_str
+                date_raw = date_str
+
+            # Find matching transaction with metadata
+            matched_metadata = find_matching_metadata(cur, desc, str(amount))
+
+            preview_item = {
+                'date_key': date_key,
+                'date_raw': date_raw,
+                'description': desc,
+                'amount': str(amount),
+                'custom_description': matched_metadata.get('custom_description', ''),
+                'category_type': matched_metadata.get('category_type', ''),
+                'parent_category': matched_metadata.get('parent_category', ''),
+                'sub_category': matched_metadata.get('sub_category', ''),
+                'is_recurring': matched_metadata.get('is_recurring', 0),
+                'has_match': matched_metadata.get('has_match', False)
+            }
+
+            preview_list.append(preview_item)
+
+        conn.close()
+        return preview_list, None
+
+    except Exception as e:
+        conn.close()
+        return [], f"Error processing CSV: {str(e)}"
+
+
+def find_matching_metadata(cur, description, amount):
+    """
+    Find an existing transaction with the same description and similar amount
+    that has custom metadata (custom_description, categories, etc.)
+    Returns the metadata from the best match.
+    """
+    from decimal import Decimal
+
+    # Look for exact description match with any custom metadata
+    cur.execute("""
+                SELECT custom_description,
+                       category_type,
+                       parent_category,
+                       sub_category,
+                       is_recurring,
+                       amount
+                FROM transactions
+                WHERE description = ?
+                  AND (custom_description IS NOT NULL
+                    OR category_type IS NOT NULL
+                    OR parent_category IS NOT NULL
+                    OR sub_category IS NOT NULL
+                    OR is_recurring = 1)
+                ORDER BY id DESC
+                LIMIT 1
+                """, (description,))
+
+    match = cur.fetchone()
+
+    if match:
+        return {
+            'custom_description': match['custom_description'] or '',
+            'category_type': match['category_type'] or '',
+            'parent_category': match['parent_category'] or '',
+            'sub_category': match['sub_category'] or '',
+            'is_recurring': match['is_recurring'] or 0,
+            'has_match': True
+        }
+
+    return {
+        'custom_description': '',
+        'category_type': '',
+        'parent_category': '',
+        'sub_category': '',
+        'is_recurring': 0,
+        'has_match': False
+    }
+
+
+def confirm_csv_import(import_data):
+    """
+    Import transactions from the preview/confirmation data.
+    Returns: (success, error_message)
+    """
+    from app.db import get_db_connection, recalculate_current_balance
+
+    if not import_data:
+        return False, "No data to import"
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        for item in import_data:
+            cur.execute("""
+                        INSERT INTO transactions
+                        (date_key, date_raw, description, amount, custom_description,
+                         category_type, parent_category, sub_category, is_recurring)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (
+                            item['date_key'],
+                            item['date_raw'],
+                            item['description'],
+                            item['amount'],
+                            item['custom_description'] if item['custom_description'] else None,
+                            item['category_type'] if item['category_type'] else None,
+                            item['parent_category'] if item['parent_category'] else None,
+                            item['sub_category'] if item['sub_category'] else None,
+                            item['is_recurring']
+                        ))
+
+        conn.commit()
+        recalculate_current_balance()
+        return True, None
+
+    except Exception as e:
+        conn.rollback()
+        return False, f"Error importing transactions: {str(e)}"
+    finally:
+        conn.close()

@@ -23,147 +23,335 @@
     </button>
 </div>
 
-<!-- Period 1: Days 1-14 -->
-<section class="budget-period">
-    <h2 class="period-header {% if current_period == 1 %}current-period{% endif %}">
-        Period 1: Days 1-14
-        {% if current_period == 1 %}<span class="current-badge">Current</span>{% endif %}
-    </h2>
-    
-    <div class="period-summary">
-        <div class="summary-item income">
-            <span class="label">Income:</span>
-            <span class="amount">{{ period1_income | currency }}</span>
-        </div>
-        <div class="summary-item expense">
-            <span class="label">Expenses:</span>
-            <span class="amount">{{ period1_expenses | currency }}</span>
-        </div>
-        <div class="summary-item net {% if (period1_income - period1_expenses) >= 0 %}positive{% else %}negative{% endif %}">
-            <span class="label">Net:</span>
-            <span class="amount">{{ (period1_income - period1_expenses) | currency }}</span>
-        </div>
-    </div>
-    
-    <table class="budget-table">
-        <thead>
-            <tr>
-                <th>Day</th>
-                <th>Description</th>
-                <th>Amount</th>
-                <th>Frequency</th>
-                <th>Next Due</th>
-                <th>Category</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in period1_items %}
-            <tr class="{% if item.amount|float < 0 %}expense-row{% else %}income-row{% endif %}">
-                <td>{{ item.day_of_month }}</td>
-                <td>{{ item.description }}</td>
-                <td>{{ item.amount | currency }}</td>
-                <td>{{ item.frequency | capitalize }}</td>
-                <td>
-                    {% if item.next_due_date %}
-                        {{ item.next_due_date }}
-                    {% else %}
-                        -
-                    {% endif %}
-                </td>
-                <td>
-                    {% if item.category_type %}
-                        {{ item.category_type }}
-                        {% if item.parent_category %} / {{ item.parent_category }}{% endif %}
-                    {% else %}
-                        -
-                    {% endif %}
-                </td>
-                <td>
-                    <button type="button" class="btn-edit" data-item-id="{{ item.id }}">Edit</button>
-                    <button type="button" class="btn-delete" data-item-id="{{ item.id }}">Delete</button>
-                </td>
-            </tr>
-            {% endfor %}
-            {% if not period1_items %}
-            <tr>
-                <td colspan="7" class="no-data">No budget items for this period</td>
-            </tr>
-            {% endif %}
-        </tbody>
-    </table>
-</section>
+<!-- Budget Edit Form -->
+<form method="post" id="budget-edit-form">
+    <input type="hidden" name="action" value="save_budget">
 
-<!-- Period 2: Days 15-End of Month -->
-<section class="budget-period">
-    <h2 class="period-header {% if current_period == 2 %}current-period{% endif %}">
-        Period 2: Days 15-End of Month
-        {% if current_period == 2 %}<span class="current-badge">Current</span>{% endif %}
-    </h2>
-    
-    <div class="period-summary">
-        <div class="summary-item income">
-            <span class="label">Income:</span>
-            <span class="amount">{{ period2_income | currency }}</span>
+    <!-- Period 1: Days 1-14 -->
+    <section class="budget-period">
+        <h2 class="period-header {% if current_period == 1 %}current-period{% endif %}">
+            Period 1: Days 1-14
+            {% if current_period == 1 %}<span class="current-badge">Current</span>{% endif %}
+        </h2>
+
+        <div class="period-summary">
+            <div class="summary-item income">
+                <span class="label">Income:</span>
+                <span class="amount">{{ period1_income | currency }}</span>
+            </div>
+            <div class="summary-item expense">
+                <span class="label">Expenses:</span>
+                <span class="amount">{{ period1_expenses | currency }}</span>
+            </div>
+            <div class="summary-item net {% if (period1_income - period1_expenses) >= 0 %}positive{% else %}negative{% endif %}">
+                <span class="label">Net:</span>
+                <span class="amount">{{ (period1_income - period1_expenses) | currency }}</span>
+            </div>
         </div>
-        <div class="summary-item expense">
-            <span class="label">Expenses:</span>
-            <span class="amount">{{ period2_expenses | currency }}</span>
+
+        <div class="table-wrapper">
+            <table class="budget-table">
+                <thead>
+                    <tr>
+                        <th class="col-day">Day</th>
+                        <th class="col-description">Description</th>
+                        <th class="col-amount">Amount</th>
+                        <th class="col-frequency">Frequency</th>
+                        <th class="col-next-due">Next Due</th>
+                        <th class="col-type">Type</th>
+                        <th class="col-parent">Parent</th>
+                        <th class="col-sub">Sub</th>
+                        <th class="col-notes">Notes</th>
+                        <th class="col-actions">⋯</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in period1_items %}
+                    <tr class="budget-row {% if item.amount|float < 0 %}expense-row{% else %}income-row{% endif %}"
+                        data-item-id="{{ item.id }}">
+                        <input type="hidden" name="item_id" value="{{ item.id }}">
+
+                        <td class="col-day">
+                            <input type="number"
+                                   name="day_of_month_{{ item.id }}"
+                                   value="{{ item.day_of_month }}"
+                                   min="1" max="31"
+                                   class="inline-input day-input">
+                        </td>
+
+                        <td class="col-description">
+                            <input type="text"
+                                   name="description_{{ item.id }}"
+                                   value="{{ item.description }}"
+                                   class="inline-input"
+                                   title="{{ item.description }}">
+                        </td>
+
+                        <td class="col-amount">
+                            <input type="text"
+                                   name="amount_{{ item.id }}"
+                                   value="{{ item.amount }}"
+                                   class="inline-input amount-input"
+                                   title="{{ item.amount }}">
+                        </td>
+
+                        <td class="col-frequency">
+                            <select name="frequency_{{ item.id }}"
+                                    class="inline-select frequency-select"
+                                    data-item-id="{{ item.id }}"
+                                    title="{{ item.frequency }}">
+                                <option value="monthly" {% if item.frequency == 'monthly' %}selected{% endif %}>Monthly</option>
+                                <option value="quarterly" {% if item.frequency == 'quarterly' %}selected{% endif %}>Quarterly</option>
+                                <option value="semi-annually" {% if item.frequency == 'semi-annually' %}selected{% endif %}>Every 6 Months</option>
+                                <option value="annually" {% if item.frequency == 'annually' %}selected{% endif %}>Yearly</option>
+                            </select>
+                        </td>
+
+                        <td class="col-next-due">
+                            <input type="date"
+                                   name="next_due_date_{{ item.id }}"
+                                   value="{{ item.next_due_date or '' }}"
+                                   class="inline-input next-due-input"
+                                   data-item-id="{{ item.id }}"
+                                   {% if item.frequency == 'monthly' %}style="display: none;"{% endif %}>
+                            {% if item.frequency == 'monthly' %}
+                                <span class="monthly-indicator">-</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="col-type">
+                            <select name="category_type_{{ item.id }}"
+                                    class="inline-select category-type-input"
+                                    data-tx-id="budget_{{ item.id }}"
+                                    data-current-parent="{{ item.parent_category or '' }}"
+                                    data-current-sub="{{ item.sub_category or '' }}"
+                                    title="{{ item.category_type or '' }}">
+                                <option value=""></option>
+                                <option value="Income" {% if item.category_type == 'Income' %}selected{% endif %}>Income</option>
+                                <option value="Bills" {% if item.category_type == 'Bills' %}selected{% endif %}>Bills</option>
+                                <option value="Expenses" {% if item.category_type == 'Expenses' %}selected{% endif %}>Expenses</option>
+                                <option value="Debts" {% if item.category_type == 'Debts' %}selected{% endif %}>Debts</option>
+                                <option value="Investments" {% if item.category_type == 'Investments' %}selected{% endif %}>Investments</option>
+                                <option value="Transfers" {% if item.category_type == 'Transfers' %}selected{% endif %}>Transfers</option>
+                            </select>
+                        </td>
+
+                        <td class="col-parent">
+                            <select name="parent_category_{{ item.id }}"
+                                    class="inline-select parent-category-input"
+                                    data-tx-id="budget_{{ item.id }}"
+                                    data-current="{{ item.parent_category or '' }}"
+                                    title="{{ item.parent_category or '' }}">
+                                <option value=""></option>
+                            </select>
+                        </td>
+
+                        <td class="col-sub">
+                            <select name="sub_category_{{ item.id }}"
+                                    class="inline-select sub-category-input"
+                                    data-tx-id="budget_{{ item.id }}"
+                                    data-current="{{ item.sub_category or '' }}"
+                                    title="{{ item.sub_category or '' }}">
+                                <option value=""></option>
+                            </select>
+                        </td>
+
+                        <td class="col-notes">
+                            <input type="text"
+                                   name="notes_{{ item.id }}"
+                                   value="{{ item.notes or '' }}"
+                                   class="inline-input"
+                                   placeholder="Notes"
+                                   title="{{ item.notes or '' }}">
+                        </td>
+
+                        <td class="col-actions">
+                            <button type="button" class="row-menu-btn" title="More Actions">
+                                ...
+                            </button>
+                            <div class="row-menu" data-item-id="{{ item.id }}" style="display:none;">
+                                <button type="button" class="row-menu-save" data-item-id="{{ item.id }}">Save</button>
+                                <button type="button" class="row-menu-delete" data-item-id="{{ item.id }}">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not period1_items %}
+                    <tr>
+                        <td colspan="10" class="no-data">No budget items for this period</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
         </div>
-        <div class="summary-item net {% if (period2_income - period2_expenses) >= 0 %}positive{% else %}negative{% endif %}">
-            <span class="label">Net:</span>
-            <span class="amount">{{ (period2_income - period2_expenses) | currency }}</span>
+    </section>
+
+    <!-- Period 2: Days 15-End of Month -->
+    <section class="budget-period">
+        <h2 class="period-header {% if current_period == 2 %}current-period{% endif %}">
+            Period 2: Days 15-End of Month
+            {% if current_period == 2 %}<span class="current-badge">Current</span>{% endif %}
+        </h2>
+
+        <div class="period-summary">
+            <div class="summary-item income">
+                <span class="label">Income:</span>
+                <span class="amount">{{ period2_income | currency }}</span>
+            </div>
+            <div class="summary-item expense">
+                <span class="label">Expenses:</span>
+                <span class="amount">{{ period2_expenses | currency }}</span>
+            </div>
+            <div class="summary-item net {% if (period2_income - period2_expenses) >= 0 %}positive{% else %}negative{% endif %}">
+                <span class="label">Net:</span>
+                <span class="amount">{{ (period2_income - period2_expenses) | currency }}</span>
+            </div>
         </div>
+
+        <div class="table-wrapper">
+            <table class="budget-table">
+                <thead>
+                    <tr>
+                        <th class="col-day">Day</th>
+                        <th class="col-description">Description</th>
+                        <th class="col-amount">Amount</th>
+                        <th class="col-frequency">Frequency</th>
+                        <th class="col-next-due">Next Due</th>
+                        <th class="col-type">Type</th>
+                        <th class="col-parent">Parent</th>
+                        <th class="col-sub">Sub</th>
+                        <th class="col-notes">Notes</th>
+                        <th class="col-actions">⋯</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in period2_items %}
+                    <tr class="budget-row {% if item.amount|float < 0 %}expense-row{% else %}income-row{% endif %}"
+                        data-item-id="{{ item.id }}">
+                        <input type="hidden" name="item_id" value="{{ item.id }}">
+
+                        <td class="col-day">
+                            <input type="number"
+                                   name="day_of_month_{{ item.id }}"
+                                   value="{{ item.day_of_month }}"
+                                   min="1" max="31"
+                                   class="inline-input day-input">
+                        </td>
+
+                        <td class="col-description">
+                            <input type="text"
+                                   name="description_{{ item.id }}"
+                                   value="{{ item.description }}"
+                                   class="inline-input"
+                                   title="{{ item.description }}">
+                        </td>
+
+                        <td class="col-amount">
+                            <input type="text"
+                                   name="amount_{{ item.id }}"
+                                   value="{{ item.amount }}"
+                                   class="inline-input amount-input"
+                                   title="{{ item.amount }}">
+                        </td>
+
+                        <td class="col-frequency">
+                            <select name="frequency_{{ item.id }}"
+                                    class="inline-select frequency-select"
+                                    data-item-id="{{ item.id }}"
+                                    title="{{ item.frequency }}">
+                                <option value="monthly" {% if item.frequency == 'monthly' %}selected{% endif %}>Monthly</option>
+                                <option value="quarterly" {% if item.frequency == 'quarterly' %}selected{% endif %}>Quarterly</option>
+                                <option value="semi-annually" {% if item.frequency == 'semi-annually' %}selected{% endif %}>Every 6 Months</option>
+                                <option value="annually" {% if item.frequency == 'annually' %}selected{% endif %}>Yearly</option>
+                            </select>
+                        </td>
+
+                        <td class="col-next-due">
+                            <input type="date"
+                                   name="next_due_date_{{ item.id }}"
+                                   value="{{ item.next_due_date or '' }}"
+                                   class="inline-input next-due-input"
+                                   data-item-id="{{ item.id }}"
+                                   {% if item.frequency == 'monthly' %}style="display: none;"{% endif %}>
+                            {% if item.frequency == 'monthly' %}
+                                <span class="monthly-indicator">-</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="col-type">
+                            <select name="category_type_{{ item.id }}"
+                                    class="inline-select category-type-input"
+                                    data-tx-id="budget_{{ item.id }}"
+                                    data-current-parent="{{ item.parent_category or '' }}"
+                                    data-current-sub="{{ item.sub_category or '' }}"
+                                    title="{{ item.category_type or '' }}">
+                                <option value=""></option>
+                                <option value="Income" {% if item.category_type == 'Income' %}selected{% endif %}>Income</option>
+                                <option value="Bills" {% if item.category_type == 'Bills' %}selected{% endif %}>Bills</option>
+                                <option value="Expenses" {% if item.category_type == 'Expenses' %}selected{% endif %}>Expenses</option>
+                                <option value="Debts" {% if item.category_type == 'Debts' %}selected{% endif %}>Debts</option>
+                                <option value="Investments" {% if item.category_type == 'Investments' %}selected{% endif %}>Investments</option>
+                                <option value="Transfers" {% if item.category_type == 'Transfers' %}selected{% endif %}>Transfers</option>
+                            </select>
+                        </td>
+
+                        <td class="col-parent">
+                            <select name="parent_category_{{ item.id }}"
+                                    class="inline-select parent-category-input"
+                                    data-tx-id="budget_{{ item.id }}"
+                                    data-current="{{ item.parent_category or '' }}"
+                                    title="{{ item.parent_category or '' }}">
+                                <option value=""></option>
+                            </select>
+                        </td>
+
+                        <td class="col-sub">
+                            <select name="sub_category_{{ item.id }}"
+                                    class="inline-select sub-category-input"
+                                    data-tx-id="budget_{{ item.id }}"
+                                    data-current="{{ item.sub_category or '' }}"
+                                    title="{{ item.sub_category or '' }}">
+                                <option value=""></option>
+                            </select>
+                        </td>
+
+                        <td class="col-notes">
+                            <input type="text"
+                                   name="notes_{{ item.id }}"
+                                   value="{{ item.notes or '' }}"
+                                   class="inline-input"
+                                   placeholder="Notes"
+                                   title="{{ item.notes or '' }}">
+                        </td>
+
+                        <td class="col-actions">
+                            <button type="button" class="row-menu-btn" title="More Actions">
+                                ...
+                            </button>
+                            <div class="row-menu" data-item-id="{{ item.id }}" style="display:none;">
+                                <button type="button" class="row-menu-save" data-item-id="{{ item.id }}">Save</button>
+                                <button type="button" class="row-menu-delete" data-item-id="{{ item.id }}">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not period2_items %}
+                    <tr>
+                        <td colspan="10" class="no-data">No budget items for this period</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Save All Button -->
+    <div class="save-all-row">
+        <button type="submit" class="save-button">
+            Save All Changes
+        </button>
     </div>
-    
-    <table class="budget-table">
-        <thead>
-            <tr>
-                <th>Day</th>
-                <th>Description</th>
-                <th>Amount</th>
-                <th>Frequency</th>
-                <th>Next Due</th>
-                <th>Category</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in period2_items %}
-            <tr class="{% if item.amount|float < 0 %}expense-row{% else %}income-row{% endif %}">
-                <td>{{ item.day_of_month }}</td>
-                <td>{{ item.description }}</td>
-                <td>{{ item.amount | currency }}</td>
-                <td>{{ item.frequency | capitalize }}</td>
-                <td>
-                    {% if item.next_due_date %}
-                        {{ item.next_due_date }}
-                    {% else %}
-                        -
-                    {% endif %}
-                </td>
-                <td>
-                    {% if item.category_type %}
-                        {{ item.category_type }}
-                        {% if item.parent_category %} / {{ item.parent_category }}{% endif %}
-                    {% else %}
-                        -
-                    {% endif %}
-                </td>
-                <td>
-                    <button type="button" class="btn-edit" data-item-id="{{ item.id }}">Edit</button>
-                    <button type="button" class="btn-delete" data-item-id="{{ item.id }}">Delete</button>
-                </td>
-            </tr>
-            {% endfor %}
-            {% if not period2_items %}
-            <tr>
-                <td colspan="7" class="no-data">No budget items for this period</td>
-            </tr>
-            {% endif %}
-        </tbody>
-    </table>
-</section>
+</form>
 
 <!-- Import Recurring Form (hidden) -->
 <form id="import-recurring-form" method="post" style="display: none;">
@@ -176,36 +364,35 @@
     <input type="hidden" name="item_id" id="delete-item-id">
 </form>
 
-<!-- Add/Edit Budget Item Dialog -->
+<!-- Add Budget Item Dialog (keep existing) -->
 <div id="budget-item-dialog" class="dialog-overlay" style="display: none;">
     <div class="dialog-content budget-dialog">
         <div class="dialog-header">
             <h2 id="dialog-title">Add Budget Item</h2>
             <button type="button" class="dialog-close">&times;</button>
         </div>
-        
+
         <form id="budget-item-form" method="post">
             <input type="hidden" name="action" id="form-action" value="add_item">
-            <input type="hidden" name="item_id" id="form-item-id">
-            
+
             <div class="dialog-body">
                 <div class="form-field">
                     <label for="budget_description">Description*</label>
                     <input type="text" id="budget_description" name="description" required>
                 </div>
-                
+
                 <div class="form-field">
                     <label for="budget_amount">Amount*</label>
-                    <input type="text" id="budget_amount" name="amount" 
+                    <input type="text" id="budget_amount" name="amount"
                            placeholder="Use negative for expenses" required>
                 </div>
-                
+
                 <div class="form-field">
                     <label for="budget_day">Day of Month*</label>
-                    <input type="number" id="budget_day" name="day_of_month" 
+                    <input type="number" id="budget_day" name="day_of_month"
                            min="1" max="31" required>
                 </div>
-                
+
                 <div class="form-field">
                     <label for="budget_frequency">Frequency*</label>
                     <select id="budget_frequency" name="frequency">
@@ -215,16 +402,16 @@
                         <option value="annually">Yearly</option>
                     </select>
                 </div>
-                
+
                 <div class="form-field" id="next-due-field" style="display: none;">
                     <label for="budget_next_due">Next Due Date</label>
                     <input type="date" id="budget_next_due" name="next_due_date">
                 </div>
-                
+
                 <div class="form-field">
                     <label for="budget_category_type">Category Type</label>
                     <select id="budget_category_type" name="category_type"
-                            class="category-type-input" data-tx-id="budget"
+                            class="category-type-input" data-tx-id="new_budget"
                             data-current-parent="" data-current-sub="">
                         <option value=""></option>
                         <option value="Income">Income</option>
@@ -235,29 +422,29 @@
                         <option value="Transfers">Transfers</option>
                     </select>
                 </div>
-                
+
                 <div class="form-field">
                     <label for="budget_parent_category">Parent Category</label>
                     <select id="budget_parent_category" name="parent_category"
-                            class="parent-category-input" data-tx-id="budget" data-current="">
+                            class="parent-category-input" data-tx-id="new_budget" data-current="">
                         <option value=""></option>
                     </select>
                 </div>
-                
+
                 <div class="form-field">
                     <label for="budget_sub_category">Sub Category</label>
                     <select id="budget_sub_category" name="sub_category"
-                            class="sub-category-input" data-tx-id="budget" data-current="">
+                            class="sub-category-input" data-tx-id="new_budget" data-current="">
                         <option value=""></option>
                     </select>
                 </div>
-                
+
                 <div class="form-field">
                     <label for="budget_notes">Notes</label>
                     <textarea id="budget_notes" name="notes" rows="3"></textarea>
                 </div>
             </div>
-            
+
             <div class="dialog-footer">
                 <button type="button" class="btn-cancel">Cancel</button>
                 <button type="submit" class="btn-submit">Save</button>

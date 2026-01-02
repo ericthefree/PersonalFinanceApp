@@ -36,18 +36,63 @@
           </div>
         </div>
 
-        <!-- Upload CSV -->
-        <div class="control-box">
+        <!-- Upload Control -->
+        <div class="control-box upload-control-box">
             <div class="control-header">Upload Transactions</div>
-            <form class="upload-form" method="post" enctype="multipart/form-data">
-                <input type="hidden" name="action" value="upload">
+            <form class="upload-form" id="upload-form" enctype="multipart/form-data">
                 <div class="control-content-vertical">
                     <input type="file" id="file" name="file" accept=".csv">
-                    <button type="submit">Add New Transaction</button>
+                    <button type="button" id="upload-preview-btn">Preview Import</button>
                 </div>
             </form>
-            <div class="control-description">
-                Upload a CSV file containing transactions to import into your account.
+        </div>
+
+        <!-- Import Preview Dialog -->
+        <div id="import-preview-dialog" class="dialog-overlay" style="display: none;">
+            <div class="dialog-content import-preview-dialog">
+                <div class="dialog-header">
+                    <h2>Import Preview - Review Transactions</h2>
+                    <button type="button" class="dialog-close" id="import-preview-close">&times;</button>
+                </div>
+
+                <div class="dialog-body">
+                    <div class="import-preview-info">
+                        <p>
+                            <strong><span id="import-count">0</span> transaction(s)</strong> ready to import.
+                            Review and edit before confirming.
+                        </p>
+                        <p class="import-hint">
+                            <span class="matched-badge">●</span> = Matched with existing transaction (metadata pre-filled)
+                        </p>
+                    </div>
+
+                    <div class="import-preview-table-wrapper">
+                        <table class="import-preview-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                    <th>Custom Desc</th>
+                                    <th>Type</th>
+                                    <th>Parent</th>
+                                    <th>Sub</th>
+                                    <th>R</th>
+                                </tr>
+                            </thead>
+                            <tbody id="import-preview-tbody">
+                                <!-- Preview rows populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="dialog-footer">
+                    <button type="button" class="btn-cancel" id="import-cancel-btn">Cancel</button>
+                    <button type="button" class="btn-success" id="import-confirm-btn">
+                        Import All Transactions
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -66,5 +111,5 @@
       </div>
     </div>
   </div>
-
+<script src="{{ url_for('static', filename='scripts/import-preview.js') }}"></script>
 {% endblock %}
